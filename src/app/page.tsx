@@ -1,65 +1,135 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import AboutUs from "@/components/AboutUs";
+import ArticleCard from "@/components/ArticleCard";
+import { ALL_ARTICLES } from "@/data/articles";
+
+const CATEGORIES = [
+  { name: "Todos los artículos", slug: "" },
+  { name: "Comparativas", slug: "comparativas" },
+  { name: "Coberturas", slug: "coberturas" },
+  { name: "Tipos de Vivienda", slug: "tipos-de-vivienda" },
+  { name: "Guías", slug: "guias" },
+];
 
 export default function Home() {
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+  const filteredArticles = selectedCategory
+    ? ALL_ARTICLES.filter((article) => article.category.slug === selectedCategory)
+    : ALL_ARTICLES;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <>
+      {/* Header / Navbar */}
+      <Header currentCategory={selectedCategory} onSelectCategory={setSelectedCategory} />
+
+      {/* Main Content Area */}
+      <main className="flex-1">
+        {/* Hero Section */}
+        <section className="relative overflow-hidden bg-white py-16 sm:py-24 border-b border-slate-100" id="hero-section">
+          {/* Background decorative gradient glow */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full pointer-events-none overflow-hidden">
+            <div className="absolute top-[-20%] left-[10%] w-[400px] h-[400px] rounded-full bg-teal-100/30 blur-3xl"></div>
+            <div className="absolute bottom-[-10%] right-[15%] w-[350px] h-[350px] rounded-full bg-cyan-100/25 blur-3xl"></div>
+          </div>
+
+          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+            {/* Tag line */}
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 border border-teal-100/60 px-3.5 py-1.5 text-xs font-semibold text-teal-800 mb-6">
+              <span className="flex h-2 w-2 rounded-full bg-teal-500 animate-pulse"></span>
+              Portal 100% Informativo e Independiente
+            </div>
+
+            {/* Friendly Title H1 */}
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight max-w-4xl mx-auto mb-6">
+              Entiende tu seguro de hogar,<span className="text-teal-600 block mt-2">sin sorpresas ni letra pequeña.</span>
+            </h1>
+
+            {/* Impartial Subtitle */}
+            <p className="font-sans text-lg sm:text-xl text-slate-600 leading-relaxed max-w-2xl mx-auto">
+              Analizamos coberturas, comparamos pólizas del mercado y redactamos guías claras. 
+              Sin comisiones, sin venderte nada y sin favorecer a ninguna aseguradora.
+            </p>
+          </div>
+        </section>
+
+        {/* Content Section (Articles Grid) */}
+        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8" id="blog-section">
+          {/* Section Header & Interactive Filter Bar */}
+          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between mb-8 border-b border-slate-200 pb-5">
+            <div>
+              <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">
+                Últimos Artículos Publicados
+              </h2>
+              <p className="font-sans text-sm text-slate-500 mt-1">
+                Información analizada y redactada por expertos independientes en consumo.
+              </p>
+            </div>
+
+            {/* Category Filter Pills */}
+            <div className="flex flex-wrap gap-2" id="category-filters">
+              {CATEGORIES.map((category) => {
+                const isActive = selectedCategory === category.slug;
+                return (
+                  <button
+                    key={category.slug}
+                    onClick={() => setSelectedCategory(category.slug)}
+                    className={`font-sans text-xs font-semibold px-3 py-1.5 rounded-full border transition-all duration-200 cursor-pointer ${
+                      isActive
+                        ? "bg-teal-600 border-teal-600 text-white shadow-sm shadow-teal-600/10"
+                        : "bg-white border-slate-200 text-slate-600 hover:border-slate-350 hover:bg-slate-50 hover:text-slate-900"
+                    }`}
+                    id={`filter-btn-${category.slug || "all"}`}
+                  >
+                    {category.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Grid responsive of cards */}
+          {filteredArticles.length > 0 ? (
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3" id="articles-grid">
+              {filteredArticles.map((article) => (
+                <ArticleCard key={article.id} article={article} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 bg-white border border-slate-100 rounded-3xl" id="no-articles-message">
+              <svg
+                className="mx-auto h-12 w-12 text-slate-400 mb-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.5"
+                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <h3 className="font-display text-lg font-bold text-slate-900 mb-1">
+                No hay artículos disponibles
+              </h3>
+              <p className="font-sans text-sm text-slate-500 max-w-sm mx-auto">
+                No hemos encontrado artículos en la categoría seleccionada actualmente. Prueba seleccionando otra categoría.
+              </p>
+            </div>
+          )}
+
+          {/* About Us Component (Visually Differentiated) */}
+          <AboutUs />
+        </section>
       </main>
-    </div>
+
+      {/* Footer */}
+      <Footer />
+    </>
   );
 }
