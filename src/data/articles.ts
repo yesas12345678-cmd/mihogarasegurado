@@ -8,6 +8,7 @@ export interface Article {
   };
   date: string;
   readTime: string;
+  imageUrl?: string;
   imageGradient: string;
   author: string;
   content: string; // Dynamic body content of the article

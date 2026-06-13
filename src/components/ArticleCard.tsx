@@ -18,28 +18,39 @@ export default function ArticleCard({ article }: ArticleCardProps) {
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-200/50">
-      {/* Visual Image Placeholder */}
-      <div className={`relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br ${article.imageGradient} flex items-center justify-center p-8`}>
-        {/* Abstract design elements inside placeholder */}
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
-        
-        {/* House / Protection Minimalist Icon */}
-        <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white/25 backdrop-blur-md text-white border border-white/20 transition-transform duration-500 group-hover:scale-110">
-          <svg
-            className="h-8 w-8"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.5"
-              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-            />
-          </svg>
-        </div>
+      {/* Visual Image */}
+      <div className="relative aspect-[16/10] w-full overflow-hidden flex items-center justify-center bg-slate-100">
+        {article.imageUrl ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={article.imageUrl}
+            alt={article.title}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className={`absolute inset-0 bg-gradient-to-br ${article.imageGradient} flex items-center justify-center p-8`}>
+            {/* Abstract design elements inside placeholder */}
+            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+            
+            {/* House / Protection Minimalist Icon */}
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white/25 backdrop-blur-md text-white border border-white/20 transition-transform duration-500 group-hover:scale-110">
+              <svg
+                className="h-8 w-8"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.5"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                />
+              </svg>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Content */}
