@@ -90,6 +90,41 @@ export default function NewArticlePage() {
                 />
               </div>
 
+              {/* SEO Fields */}
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="metaTitle" className="block text-sm font-bold text-slate-700 mb-1.5">
+                    Meta Título (SEO)
+                  </label>
+                  <input
+                    type="text"
+                    name="metaTitle"
+                    id="metaTitle"
+                    placeholder="Ej: Seguro de Robo en el Jardín: Coberturas y Límites"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-sans placeholder-slate-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition duration-200"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Idealmente entre 50 y 60 caracteres.
+                  </p>
+                </div>
+                <div>
+                  <label htmlFor="metaDescription" className="block text-sm font-bold text-slate-700 mb-1.5">
+                    Meta Descripción (SEO)
+                  </label>
+                  <input
+                    type="text"
+                    name="metaDescription"
+                    id="metaDescription"
+                    placeholder="Ej: ¿Cubre el seguro de hogar los robos en jardines o terrazas? Analizamos las coberturas, límites y exclusiones comunes..."
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-sans placeholder-slate-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition duration-200"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Idealmente entre 150 y 160 caracteres.
+                  </p>
+                </div>
+              </div>
+
+
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 {/* Category */}
                 <div>

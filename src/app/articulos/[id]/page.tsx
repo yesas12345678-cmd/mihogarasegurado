@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { pool } from "@/lib/db";
@@ -11,6 +12,46 @@ interface PageProps {
 
 export const dynamic = "force-dynamic";
 
+// Dynamic SEO metadata generation for article pages
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  try {
+    const client = await pool.connect();
+    try {
+      const { rows } = await client.query(
+        "SELECT title, excerpt, meta_title, meta_description FROM articles WHERE id = $1",
+        [id]
+      );
+      if (rows.length > 0) {
+        const article = rows[0];
+        
+        // Use custom SEO meta title and meta description if they exist, otherwise fallback
+        const seoTitle = article.meta_title ? article.meta_title : `${article.title} | Mi Hogar Asegurado`;
+        const seoDescription = article.meta_description ? article.meta_description : article.excerpt;
+
+        return {
+          title: seoTitle,
+          description: seoDescription,
+          openGraph: {
+            title: seoTitle,
+            description: seoDescription,
+            type: "article",
+          },
+        };
+      }
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error("Error generating metadata:", err);
+  }
+
+  return {
+    title: "Artículo | Mi Hogar Asegurado",
+    description: "Portal de información independiente sobre seguros de hogar.",
+  };
+}
+
 export default async function ArticlePage({ params }: PageProps) {
   const { id } = await params;
   let article: Article | null = null;
@@ -19,7 +60,7 @@ export default async function ArticlePage({ params }: PageProps) {
     const client = await pool.connect();
     try {
       const { rows } = await client.query(
-        "SELECT id, title, excerpt, category_name, category_slug, date, read_time, image_url, image_gradient, author, content FROM articles WHERE id = $1",
+        "SELECT id, title, excerpt, category_name, category_slug, date, read_time, image_url, image_gradient, author, content, meta_title, meta_description FROM articles WHERE id = $1",
         [id]
       );
       
@@ -39,75 +80,20 @@ export default async function ArticlePage({ params }: PageProps) {
           imageGradient: row.image_gradient,
           author: row.author,
           content: row.content,
+          metaTitle: row.meta_title || undefined,
+          metaDescription: row.meta_description || undefined,
         };
       }
     } finally {
       client.release();
     }
   } catch (err) {
-    console.error("Error fetching article from PostgreSQL in detail page:", err);
+    console.error("Error fetching article from PostgreSQL:", err);
   }
 
   if (!article) {
     notFound();
   }
-
-  // Simple parser to render basic markdown elements into clean JSX elements
-  const renderContent = (content: string) => {
-    return content.split("\n\n").map((paragraph, index) => {
-      // Headers
-      if (paragraph.startsWith("## ")) {
-        return (
-          <h2 key={index} className="font-display text-2xl font-extrabold text-slate-900 mt-8 mb-4">
-            {paragraph.replace("## ", "")}
-          </h2>
-        );
-      }
-      
-      // Unordered list items
-      if (paragraph.startsWith("*   ") || paragraph.startsWith("-   ") || paragraph.startsWith("* ") || paragraph.startsWith("- ")) {
-        const items = paragraph.split("\n");
-        return (
-          <ul key={index} className="list-disc pl-5 space-y-2 text-slate-700 font-sans my-4">
-            {items.map((item, idx) => (
-              <li key={idx} className="leading-relaxed">
-                {item.replace(/^(\*\s+|\-\s+|\*\s{3}|\-\s{3})/, "")}
-              </li>
-            ))}
-          </ul>
-        );
-      }
-
-      // Ordered list items
-      if (paragraph.match(/^\d+\.\s+/)) {
-        const items = paragraph.split("\n");
-        return (
-          <ol key={index} className="list-decimal pl-5 space-y-2 text-slate-700 font-sans my-4">
-            {items.map((item, idx) => (
-              <li key={idx} className="leading-relaxed">
-                {item.replace(/^\d+\.\s+/, "")}
-              </li>
-            ))}
-          </ol>
-        );
-      }
-
-      // Bold text replacements (for simple bold formatting)
-      const parts = paragraph.split(/(\*\*.*?\*\*)/g);
-      const elements = parts.map((part, pidx) => {
-        if (part.startsWith("**") && part.endsWith("**")) {
-          return <strong key={pidx} className="font-bold text-slate-950">{part.slice(2, -2)}</strong>;
-        }
-        return part;
-      });
-
-      return (
-        <p key={index} className="font-sans text-base leading-relaxed text-slate-700 mb-6">
-          {elements}
-        </p>
-      );
-    });
-  };
 
   return (
     <>
@@ -190,9 +176,9 @@ export default async function ArticlePage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* Body Content */}
-            <div className="article-body">
-              {renderContent(article.content)}
+            {/* Body Content (renders raw HTML for custom Tailwind CSS designs) */}
+            <div className="article-body font-sans text-base leading-relaxed text-slate-700">
+              <div dangerouslySetInnerHTML={{ __html: article.content }} />
             </div>
           </div>
         </article>

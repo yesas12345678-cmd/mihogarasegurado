@@ -38,12 +38,15 @@ export default function CookiesPage() {
             </p>
 
             <h2 className="font-display text-xl font-bold text-slate-900 mt-6 mb-2">2. Tipos de Cookies que Utiliza esta Web</h2>
-            <ul className="list-disc pl-5 space-y-2">
+            <ul className="list-disc pl-5 space-y-2 font-sans text-sm sm:text-base text-slate-700">
               <li>
-                **Cookies Técnicas (Necesarias):** Son imprescindibles para que la web funcione correctamente (como guardar el estado de tus filtros de categorías en portada). No recopilan ninguna información personal.
+                **Cookies Técnicas (Necesarias):** Son imprescindibles para que la web funcione correctamente y recuerde tus preferencias (como el estado del banner de consentimiento). No recopilan datos personales de ningún tipo.
               </li>
               <li>
-                **Cookies Analíticas:** Nos permiten entender cómo navegan los usuarios por el blog de forma agregada y anónima para optimizar la velocidad y distribución de los artículos.
+                **Cookies Analíticas:** Nos permiten analizar de forma completamente anónima y agregada el tráfico de usuarios en las diferentes secciones para optimizar la velocidad del blog.
+              </li>
+              <li>
+                **Cookies Publicitarias (Google AdSense):** Google y sus proveedores asociados utilizan estas cookies de seguimiento para mostrar anuncios adaptados a las búsquedas e intereses de cada lector.
               </li>
             </ul>
 

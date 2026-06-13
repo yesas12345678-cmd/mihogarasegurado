@@ -12,6 +12,8 @@ export interface Article {
   imageGradient: string;
   author: string;
   content: string; // Dynamic body content of the article
+  metaTitle?: string;
+  metaDescription?: string;
 }
 
 export const ALL_ARTICLES: Article[] = [

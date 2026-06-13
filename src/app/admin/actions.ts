@@ -21,6 +21,8 @@ function slugify(text: string): string {
 
 export async function createArticle(prevState: any, formData: FormData) {
   const title = formData.get("title") as string;
+  const metaTitle = formData.get("metaTitle") as string;
+  const metaDescription = formData.get("metaDescription") as string;
   const excerpt = formData.get("excerpt") as string;
   const content = formData.get("content") as string;
   const categorySlug = formData.get("category") as string;
@@ -87,10 +89,10 @@ export async function createArticle(prevState: any, formData: FormData) {
     try {
       await client.query(
         `
-        INSERT INTO articles (id, title, excerpt, category_name, category_slug, date, read_time, image_url, image_gradient, author, content)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        INSERT INTO articles (id, title, meta_title, meta_description, excerpt, category_name, category_slug, date, read_time, image_url, image_gradient, author, content)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         `,
-        [id, title, excerpt, categoryName, categorySlug, date, readTime, imageUrl, imageGradient, author, content]
+        [id, title, metaTitle || null, metaDescription || null, excerpt, categoryName, categorySlug, date, readTime, imageUrl, imageGradient, author, content]
       );
     } finally {
       client.release();

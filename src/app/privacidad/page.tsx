@@ -51,6 +51,14 @@ export default function PrivacidadPage() {
             <p>
               Bajo ninguna circunstancia vendemos, alquilamos ni cedemos información de contacto de nuestros lectores a aseguradoras, agencias de marketing ni terceras entidades.
             </p>
+
+            <h2 className="font-display text-xl font-bold text-slate-900 mt-6 mb-2">5. Publicidad de Google AdSense y Cookies de Terceros</h2>
+            <p>
+              Este sitio web utiliza **Google AdSense** para mostrar anuncios publicitarios a nuestros lectores. Google, como proveedor asociado externo, utiliza cookies de publicidad para servir anuncios en nuestro sitio web basados en visitas anteriores de los usuarios a esta y otras páginas web en Internet.
+            </p>
+            <p>
+              El uso de cookies de publicidad por parte de Google y de sus socios permite mostrar anuncios adaptados a los intereses del lector. Puedes inhabilitar la publicidad personalizada en cualquier momento a través de la sección de <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" className="text-teal-650 font-bold hover:underline">Configuración de anuncios de Google</a>. Alternativamente, puedes optar por inhabilitar el uso de cookies para publicidad personalizada de otros proveedores asociados externos visitando el portal independiente de autorregulación del sector en <a href="https://www.aboutads.info" target="_blank" rel="noopener noreferrer" className="text-teal-650 font-bold hover:underline">www.aboutads.info</a>.
+            </p>
           </div>
         </div>
       </main>
