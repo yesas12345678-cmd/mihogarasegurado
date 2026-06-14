@@ -20,11 +20,11 @@ Puedes copiar y pegar este documento completo en la otra IA (como DeepSeek, Chat
 *   **Extensión de Texto Real:** El artículo debe contener estrictamente entre **2.000 y 2.500 palabras de texto real** (sin contar las etiquetas HTML del código). Debe ser denso, exhaustivo, con explicaciones legales detalladas, casos prácticos, tablas coloridas y elementos interactivos nativos.
 *   **Idioma:** Español de España (castellano neutro y formal).
 *   **Cero Emojis:** Bajo ninguna circunstancia uses emojis en el artículo, títulos, metatítulos o metadescripciones. Afecta la seriedad corporativa y la aceptación de Google AdSense.
-*   **Estructura SEO:** Introduce las palabras clave de forma natural en los primeros párrafos, en los encabezados H2 y H3, y a lo largo de las explicaciones.
+*   **Estructura SEO:** Introduce las palabras clave de forma natural en los primeros párrafos, en los encabezados H2 and H3, y a lo largo de las explicaciones.
 
 ---
 
-### 3. Reglas de Formato y Código (Crítico)
+### 3. Reglas de Formato y Código (Crítico - Evitar Errores de Renderizado)
 *   **Formato de Salida:** Devuelve el contenido estructurado únicamente como un objeto **JSON** con los siguientes campos:
     *   `title`: El título optimizado para el lector.
     *   `meta_title`: El título de la etiqueta `<title>` (idealmente entre 50 y 60 caracteres, sin emojis).
@@ -35,6 +35,10 @@ Puedes copiar y pegar este documento completo en la otra IA (como DeepSeek, Chat
     *   **Prohibido:** No utilices etiquetas estructurales globales de documento como `<!DOCTYPE html>`, `<html>`, `<head>`, `<title>`, `<body>`, `meta` o estilos CSS externos `<style>`.
     *   **Permitido:** Solo utiliza etiquetas de estructura interna (`<div>`, `<p>`, `<h2>`, `<h3>`, `<ul>`, `<li>`, `table`, `details`, `summary`, `strong`, etc.).
     *   Todo el HTML debe comenzar con un contenedor `<div class="space-y-8">` y terminar con `</div>`.
+
+*   **REGLAS CRÍTICAS DE ESCAPE Y ESTRUCTURA (EVITAR ERRORES DE TEXTO PLANO):**
+    *   **Prohibido usar caracteres de escape literales de salto de línea (`\n`, `\\n`, `\r`):** No debes escribir ni incluir de forma literal los caracteres de texto `\n`, `\\n`, `\r` o similares dentro del código HTML ni en los párrafos de texto. En HTML, los espacios y saltos de línea se logran exclusivamente mediante etiquetas de bloque (`<p>`, `<div>`, `<br />`). La presencia de secuencias como `\n` visibles en el texto final es inaceptable y destruye el diseño de la página.
+    *   **Prohibidas las tablas de texto plano:** Bajo ninguna circunstancia simules tablas, esquemas o cuadros alineando textos mediante espacios en blanco, guiones o tabulaciones. Cualquier dato estructurado, comparativa o desglose debe estar implementado estrictamente con etiquetas HTML reales (`<table>`, `<thead>`, `<tbody>`, `<tr>`, `<th>`, `<td>`), aplicando los estilos y clases de Tailwind indicados en esta guía.
 
 ---
 
