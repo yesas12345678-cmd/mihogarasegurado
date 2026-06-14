@@ -8,18 +8,21 @@ const AUTHORS = [
     role: "Editora Técnica y Co-Fundadora",
     bio: "Patricia trabajó durante más de 9 años inspeccionando siniestros del hogar para dos de las aseguradoras más grandes de España. Cansada de ver reclamaciones legítimas denegadas por desconocimiento de las cláusulas por parte del usuario, decidió fundar Mi Hogar Asegurado para equilibrar la balanza y educar al consumidor de forma transparente.",
     initials: "PG",
+    imageUrl: "/uploads/author_patricia.png",
   },
   {
     name: "Carlos M. (Jurista de Consumo)",
     role: "Especialista en Derecho de Seguros",
     bio: "Graduado en Derecho y especializado en la protección del consumidor. Carlos analiza las pólizas de seguros del hogar, detecta cláusulas abusivas y redacta guías paso a paso para ayudar a nuestros lectores a formular reclamaciones oficiales de manera efectiva ante los defensores del asegurado.",
     initials: "CM",
+    imageUrl: "/uploads/author_carlos.png",
   },
   {
     name: "Elena R. (Abogada de Vivienda)",
     role: "Colaboradora de Arrendamientos",
     bio: "Abogada ejerciente especializada en propiedad horizontal y arrendamientos urbanos. Elena aporta su experiencia en el blog analizando las coberturas cruzadas entre el seguro de la comunidad de vecinos, el del casero y el del inquilino, aclarando quién debe asumir el coste de cada tipo de siniestro.",
     initials: "ER",
+    imageUrl: "/uploads/author_elena.png",
   },
 ];
 
@@ -56,8 +59,18 @@ export default function AutoresPage() {
           <div className="space-y-12">
             {AUTHORS.map((author) => (
               <div key={author.name} className="flex flex-col md:flex-row gap-6 p-6 border border-slate-100 rounded-2xl bg-slate-50/50">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-600 text-white font-display text-xl font-bold shrink-0 shadow-md shadow-teal-600/10">
-                  {author.initials}
+                <div className="h-16 w-16 rounded-2xl overflow-hidden shrink-0 shadow-md shadow-teal-600/10 relative bg-slate-200 border border-slate-100">
+                  {author.imageUrl ? (
+                    <img
+                      src={author.imageUrl}
+                      alt={author.name}
+                      className="h-full w-full object-cover animate-in fade-in duration-300"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-teal-600 text-white font-display text-xl font-bold">
+                      {author.initials}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <h2 className="font-display text-xl font-bold text-slate-900 mb-1">{author.name}</h2>

@@ -2,19 +2,27 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function CookieBanner() {
   const [showBanner, setShowBanner] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
-    // Check if consent has already been decided
-    const consent = localStorage.getItem("cookie-consent");
-    if (!consent) {
-      // If no consent, show banner
+    try {
+      // Check if consent has already been decided
+      const consent = localStorage.getItem("cookie-consent");
+      if (!consent) {
+        // If no consent, show banner
+        setShowBanner(true);
+      } else if (consent === "rejected") {
+        // If rejected, enforce the blocker immediately
+        enforceNoCookies();
+      }
+    } catch (e) {
+      console.warn("Storage access not available:", e);
+      // Fallback: show banner
       setShowBanner(true);
-    } else if (consent === "rejected") {
-      // If rejected, enforce the blocker immediately
-      enforceNoCookies();
     }
   }, []);
 
@@ -63,20 +71,30 @@ export default function CookieBanner() {
   };
 
   const handleAccept = () => {
-    localStorage.setItem("cookie-consent", "accepted");
+    try {
+      localStorage.setItem("cookie-consent", "accepted");
+    } catch (e) {
+      console.warn("Could not save consent to localStorage:", e);
+    }
     // Write a technical cookie to verify acceptance is enabled
     document.cookie = "cookie_consent_accepted=true; max-age=31536000; path=/";
     setShowBanner(false);
   };
 
   const handleReject = () => {
-    localStorage.setItem("cookie-consent", "rejected");
+    try {
+      localStorage.setItem("cookie-consent", "rejected");
+    } catch (e) {
+      console.warn("Could not save consent to localStorage:", e);
+    }
     // Enforce blocking immediately
     enforceNoCookies();
     setShowBanner(false);
   };
 
-  if (!showBanner) return null;
+  const isLegalPage = ["/cookies", "/privacidad", "/aviso-legal", "/terminos"].includes(pathname);
+
+  if (isLegalPage || !showBanner) return null;
 
   return (
     <div className="fixed bottom-0 inset-x-0 z-[100] p-4 sm:p-6 md:p-8 animate-in slide-in-from-bottom-10 duration-500 ease-out">

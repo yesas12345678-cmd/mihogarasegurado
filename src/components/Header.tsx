@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface HeaderProps {
   currentCategory?: string;
@@ -10,6 +11,7 @@ interface HeaderProps {
 
 export default function Header({ currentCategory, onSelectCategory }: HeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
 
   const categories = [
     { name: "Comparativas", slug: "comparativas" },
@@ -21,6 +23,12 @@ export default function Header({ currentCategory, onSelectCategory }: HeaderProp
   const handleNavClick = (slug: string) => {
     if (onSelectCategory) {
       onSelectCategory(slug);
+    } else {
+      if (slug) {
+        router.push(`/?category=${slug}`);
+      } else {
+        router.push("/");
+      }
     }
     setIsOpen(false);
   };

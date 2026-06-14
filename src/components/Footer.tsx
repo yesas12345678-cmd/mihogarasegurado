@@ -55,21 +55,12 @@ export default function Footer() {
             <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {legalLinks.map((link) => (
                 <li key={link.name}>
-                  {link.isContact ? (
-                    <span 
-                      className="font-sans text-sm text-slate-600 hover:text-teal-600 transition-colors duration-200 cursor-pointer"
-                      onClick={() => alert("Formulario de contacto: En un sitio de producción, esto abriría un modal o redirigiría a /contacto.")}
-                    >
-                      {link.name} <span className="text-xs text-teal-600 font-medium">(Formulario)</span>
-                    </span>
-                  ) : (
-                    <Link
-                      href={link.href}
-                      className="font-sans text-sm text-slate-600 hover:text-teal-600 transition-colors duration-200"
-                    >
-                      {link.name}
-                    </Link>
-                  )}
+                  <Link
+                    href={link.href}
+                    className="font-sans text-sm text-slate-600 hover:text-teal-600 transition-colors duration-200"
+                  >
+                    {link.name}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -92,9 +83,6 @@ export default function Footer() {
         <div className="mt-8 border-t border-slate-100 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="font-sans text-xs text-slate-400">
             &copy; {currentYear} Mi Hogar Asegurado. Todos los derechos reservados.
-          </p>
-          <p className="font-sans text-xs text-slate-400">
-            Diseño tipográfico premium enfocado al usuario.
           </p>
         </div>
       </div>

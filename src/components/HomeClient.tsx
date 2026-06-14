@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AboutUs from "@/components/AboutUs";
@@ -23,14 +23,37 @@ const CATEGORIES = [
 export default function HomeClient({ initialArticles }: HomeClientProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const categoryParam = params.get("category");
+      if (categoryParam && ["comparativas", "coberturas", "tipos-de-vivienda", "guias"].includes(categoryParam)) {
+        setSelectedCategory(categoryParam);
+      }
+    }
+  }, []);
+
   const filteredArticles = selectedCategory
     ? initialArticles.filter((article) => article.category.slug === selectedCategory)
     : initialArticles;
 
+  const handleCategorySelect = (slug: string) => {
+    setSelectedCategory(slug);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (slug) {
+        url.searchParams.set("category", slug);
+      } else {
+        url.searchParams.delete("category");
+      }
+      window.history.pushState({}, "", url.toString());
+    }
+  };
+
   return (
     <>
       {/* Header / Navbar */}
-      <Header currentCategory={selectedCategory} onSelectCategory={setSelectedCategory} />
+      <Header currentCategory={selectedCategory} onSelectCategory={handleCategorySelect} />
 
       {/* Main Content Area */}
       <main className="flex-1">
@@ -82,7 +105,7 @@ export default function HomeClient({ initialArticles }: HomeClientProps) {
                 return (
                   <button
                     key={category.slug}
-                    onClick={() => setSelectedCategory(category.slug)}
+                    onClick={() => handleCategorySelect(category.slug)}
                     className={`font-sans text-xs font-semibold px-3 py-1.5 rounded-full border transition-all duration-200 cursor-pointer ${
                       isActive
                         ? "bg-teal-600 border-teal-600 text-white shadow-sm shadow-teal-600/10"
