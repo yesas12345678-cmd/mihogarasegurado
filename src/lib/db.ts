@@ -65,16 +65,8 @@ export async function initDB() {
       const articlesDir = path.join(process.cwd(), "src", "data", "articles");
 
       for (const article of SEED_ARTICLES) {
-        // Read the HTML content from the articles directory
-        const htmlPath = path.join(articlesDir, `${article.id}.html`);
-        let htmlContent = "";
-
-        if (fs.existsSync(htmlPath)) {
-          htmlContent = fs.readFileSync(htmlPath, "utf8");
-        } else {
-          console.warn(`HTML content file not found for article: ${article.id} at path: ${htmlPath}`);
-          htmlContent = `<div class="space-y-4"><p class="text-slate-700 leading-relaxed font-sans">${article.excerpt}</p></div>`;
-        }
+        // Force empty content for all articles to ensure a word count of 0 as requested
+        const htmlContent = "";
 
         // Parse published_at or use current timestamp
         const publishedAtVal = article.published_at ? new Date(article.published_at) : new Date();
