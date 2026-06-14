@@ -14,7 +14,7 @@ export default async function HomePage() {
     const client = await pool.connect();
     try {
       const { rows } = await client.query(
-        "SELECT id, title, excerpt, category_name, category_slug, date, read_time, image_url, image_gradient, author FROM articles ORDER BY created_at DESC"
+        "SELECT id, title, excerpt, category_name, category_slug, date, read_time, image_url, image_gradient, author FROM articles WHERE published_at <= NOW() ORDER BY published_at DESC"
       );
       
       // Map DB row structure to unified camelCase React state props

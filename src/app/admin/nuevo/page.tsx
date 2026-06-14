@@ -90,6 +90,44 @@ export default function NewArticlePage() {
                 />
               </div>
 
+              {/* Keyword & Publication Schedule */}
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                <div>
+                  <label htmlFor="keyword" className="block text-sm font-bold text-slate-700 mb-1.5">
+                    Keyword Principal (Única)
+                  </label>
+                  <input
+                    type="text"
+                    name="keyword"
+                    id="keyword"
+                    placeholder="Ej: coberturas seguro jardin"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-sans placeholder-slate-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition duration-200"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="publishedDate" className="block text-sm font-bold text-slate-700 mb-1.5">
+                    Fecha de Publicación
+                  </label>
+                  <input
+                    type="date"
+                    name="publishedDate"
+                    id="publishedDate"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-sans focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition duration-200"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="publishedTime" className="block text-sm font-bold text-slate-700 mb-1.5">
+                    Hora de Publicación
+                  </label>
+                  <input
+                    type="time"
+                    name="publishedTime"
+                    id="publishedTime"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-sans focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 transition duration-200"
+                  />
+                </div>
+              </div>
+
               {/* SEO Fields */}
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div>

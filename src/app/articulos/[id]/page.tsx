@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const client = await pool.connect();
     try {
       const { rows } = await client.query(
-        "SELECT title, excerpt, meta_title, meta_description FROM articles WHERE id = $1",
+        "SELECT title, excerpt, meta_title, meta_description FROM articles WHERE id = $1 AND published_at <= NOW()",
         [id]
       );
       if (rows.length > 0) {
@@ -60,7 +60,7 @@ export default async function ArticlePage({ params }: PageProps) {
     const client = await pool.connect();
     try {
       const { rows } = await client.query(
-        "SELECT id, title, excerpt, category_name, category_slug, date, read_time, image_url, image_gradient, author, content, meta_title, meta_description FROM articles WHERE id = $1",
+        "SELECT id, title, excerpt, category_name, category_slug, date, read_time, image_url, image_gradient, author, content, meta_title, meta_description FROM articles WHERE id = $1 AND published_at <= NOW()",
         [id]
       );
       

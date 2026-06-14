@@ -28,7 +28,11 @@ export async function initDB() {
         image_gradient VARCHAR(255) NOT NULL,
         author VARCHAR(255) NOT NULL,
         content TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        meta_title VARCHAR(255),
+        meta_description TEXT,
+        published_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        keyword VARCHAR(255)
       );
     `);
 
@@ -36,9 +40,22 @@ export async function initDB() {
     await client.query(`
       ALTER TABLE articles ADD COLUMN IF NOT EXISTS meta_title VARCHAR(255);
       ALTER TABLE articles ADD COLUMN IF NOT EXISTS meta_description TEXT;
+      ALTER TABLE articles ADD COLUMN IF NOT EXISTS published_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+      ALTER TABLE articles ADD COLUMN IF NOT EXISTS keyword VARCHAR(255);
     `);
 
-    // 3. Check if table is empty
+    // 3. Add UNIQUE constraint for keyword if not exists
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'articles_keyword_key') THEN
+          ALTER TABLE articles ADD CONSTRAINT articles_keyword_key UNIQUE (keyword);
+        END IF;
+      END
+      $$;
+    `);
+
+    // 4. Check if table is empty
     const { rows } = await client.query("SELECT COUNT(*) FROM articles");
     const count = parseInt(rows[0].count, 10);
 
@@ -59,10 +76,13 @@ export async function initDB() {
           htmlContent = `<div class="space-y-4"><p class="text-slate-700 leading-relaxed font-sans">${article.excerpt}</p></div>`;
         }
 
+        // Parse published_at or use current timestamp
+        const publishedAtVal = article.published_at ? new Date(article.published_at) : new Date();
+
         await client.query(
           `
-          INSERT INTO articles (id, title, meta_title, meta_description, excerpt, category_name, category_slug, date, read_time, image_url, image_gradient, author, content)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+          INSERT INTO articles (id, title, meta_title, meta_description, excerpt, category_name, category_slug, date, read_time, image_url, image_gradient, author, content, published_at, keyword)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
           ON CONFLICT (id) DO UPDATE SET
             title = EXCLUDED.title,
             meta_title = EXCLUDED.meta_title,
@@ -75,7 +95,9 @@ export async function initDB() {
             image_url = EXCLUDED.image_url,
             image_gradient = EXCLUDED.image_gradient,
             author = EXCLUDED.author,
-            content = EXCLUDED.content
+            content = EXCLUDED.content,
+            published_at = EXCLUDED.published_at,
+            keyword = EXCLUDED.keyword
           `,
           [
             article.id,
@@ -91,10 +113,12 @@ export async function initDB() {
             article.image_gradient,
             article.author,
             htmlContent,
+            publishedAtVal,
+            article.keyword || `default-key-${article.id}`
           ]
         );
       }
-      console.log("Database pre-populated successfully with 8 SEO-optimized HTML articles!");
+      console.log("Database pre-populated successfully with 100 SEO-optimized HTML articles!");
     } else {
       console.log(`Database already contains ${count} articles. Skipping seeding.`);
     }
