@@ -1,6 +1,12 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+
+export const metadata: Metadata = {
+  title: "Términos y Condiciones de Uso | Mi Hogar Asegurado",
+  description: "Consulta los términos y condiciones de uso aplicables al navegar por nuestro portal de información independiente sobre seguros de hogar.",
+};
 
 export default function TerminosPage() {
   return (

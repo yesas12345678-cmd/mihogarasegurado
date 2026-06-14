@@ -1,5 +1,5 @@
 import { MetadataRoute } from "next";
-import { ALL_ARTICLES } from "@/data/articles";
+import { pool } from "@/lib/db";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://mihogarasegurado.com";
@@ -12,13 +12,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route === "" ? 1.0 : 0.4,
   }));
 
-  // Dynamic article URLs from our data module
-  const articles = ALL_ARTICLES.map((article) => ({
-    url: `${baseUrl}/articulos/${article.id}`,
-    lastModified: new Date(),
-    changeFrequency: "weekly" as const,
-    priority: 0.8,
-  }));
+  // Dynamic article URLs from our database
+  let articleRoutes: MetadataRoute.Sitemap = [];
+  try {
+    const { rows } = await pool.query(
+      "SELECT id, published_at FROM articles WHERE published_at <= NOW() ORDER BY published_at DESC"
+    );
+    
+    articleRoutes = rows.map((article) => ({
+      url: `${baseUrl}/articulos/${article.id}`,
+      lastModified: article.published_at ? new Date(article.published_at) : new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    }));
+  } catch (err) {
+    console.error("Error fetching articles for sitemap:", err);
+  }
 
-  return [...routes, ...articles];
+  return [...routes, ...articleRoutes];
 }

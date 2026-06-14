@@ -16,10 +16,14 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://mihogarasegurado.com"),
   title: "Mi Hogar Asegurado | Información Independiente de Seguros de Hogar",
   description: "Tu portal de información imparcial y honesto sobre seguros de hogar. Analizamos coberturas, comparativas, guías y tipos de vivienda sin fines comerciales.",
   keywords: ["seguro de hogar", "coberturas de hogar", "comparativas seguros", "guia de seguros", "seguro de vivienda"],
   authors: [{ name: "Equipo Editorial de Mi Hogar Asegurado" }],
+  alternates: {
+    canonical: "/",
+  },
   robots: {
     index: true,
     follow: true,

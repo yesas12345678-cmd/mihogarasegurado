@@ -1,6 +1,12 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+
+export const metadata: Metadata = {
+  title: "Política de Privacidad | Mi Hogar Asegurado",
+  description: "Consulta cómo protegemos tus datos personales en Mi Hogar Asegurado. Un portal informativo independiente que no almacena datos bancarios ni de filiación.",
+};
 
 export default function PrivacidadPage() {
   return (

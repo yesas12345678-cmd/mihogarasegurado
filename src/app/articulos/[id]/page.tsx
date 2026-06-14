@@ -32,6 +32,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         return {
           title: seoTitle,
           description: seoDescription,
+          alternates: {
+            canonical: `/articulos/${id}`,
+          },
           openGraph: {
             title: seoTitle,
             description: seoDescription,
@@ -95,8 +98,36 @@ export default async function ArticlePage({ params }: PageProps) {
     notFound();
   }
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": article.title,
+    "description": article.excerpt,
+    "datePublished": article.date,
+    "author": {
+      "@type": "Person",
+      "name": article.author,
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Mi Hogar Asegurado",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://mihogarasegurado.com/icon.svg",
+      },
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": `https://mihogarasegurado.com/articulos/${article.id}`,
+    },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Header />
       <main className="flex-1 bg-slate-50 py-12">
         <article className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">

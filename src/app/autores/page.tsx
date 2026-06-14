@@ -1,6 +1,12 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+
+export const metadata: Metadata = {
+  title: "Equipo Editorial | Mi Hogar Asegurado",
+  description: "Conoce a nuestro equipo de peritos, juristas y abogados de consumo dedicados a analizar seguros de hogar de forma independiente y sin sesgos.",
+};
 
 const AUTHORS = [
   {

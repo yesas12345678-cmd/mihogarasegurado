@@ -1,6 +1,12 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+
+export const metadata: Metadata = {
+  title: "Aviso Legal | Mi Hogar Asegurado",
+  description: "Información legal, términos de exención de responsabilidad y titularidad del portal independiente Mi Hogar Asegurado.",
+};
 
 export default function AvisoLegalPage() {
   return (

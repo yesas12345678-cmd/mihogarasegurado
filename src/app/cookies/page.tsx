@@ -1,6 +1,12 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+
+export const metadata: Metadata = {
+  title: "Política de Cookies | Mi Hogar Asegurado",
+  description: "Información detallada sobre el uso de cookies técnicas, analíticas y publicitarias en el portal informativo de Mi Hogar Asegurado.",
+};
 
 export default function CookiesPage() {
   return (
