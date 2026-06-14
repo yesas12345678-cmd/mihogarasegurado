@@ -278,32 +278,15 @@ function formatSpanishDate(d: Date): string {
 export function generateSeedArticles(): SeedArticleMetadata[] {
   const articles: SeedArticleMetadata[] = [];
 
-  // Gather all new entries by category
-  const categories = [
-    { name: "Comparativas", slug: "comparativas", items: COMPARATIVAS_NEW },
-    { name: "Coberturas", slug: "coberturas", items: COBERTURAS_NEW },
-    { name: "Tipos de Vivienda", slug: "tipos-de-vivienda", items: VIVIENDAS_NEW },
-    { name: "Guías", slug: "guias", items: GUIAS_NEW }
-  ];
+  // Gather lists by category
+  const compList: any[] = [];
+  const cobList: any[] = [];
+  const vivList: any[] = [];
+  const guiaList: any[] = [];
 
-  const allArticlesList: {
-    id: string;
-    title: string;
-    meta_title: string;
-    meta_description: string;
-    excerpt: string;
-    category_name: string;
-    category_slug: string;
-    read_time: string;
-    image_url: string;
-    image_gradient: string;
-    author: string;
-    keyword: string;
-  }[] = [];
-
-  // Add original ones first
+  // Add original ones to their respective categories
   for (const art of ORIGINAL_ARTICLES) {
-    allArticlesList.push({
+    const item = {
       id: art.id,
       title: art.title,
       meta_title: art.meta_title,
@@ -316,10 +299,13 @@ export function generateSeedArticles(): SeedArticleMetadata[] {
       image_gradient: art.image_gradient,
       author: art.author,
       keyword: art.keyword || ""
-    });
+    };
+    if (art.category_slug === "comparativas") compList.push(item);
+    else if (art.category_slug === "coberturas") cobList.push(item);
+    else if (art.category_slug === "tipos-de-vivienda") vivList.push(item);
+    else if (art.category_slug === "guias") guiaList.push(item);
   }
 
-  // Add new generated ones
   const authors = ["Patricia G. (Ex-Perito)", "Carlos M. (Jurista)", "Elena R. (Abogada)"];
   const gradients = [
     "from-cyan-500 to-blue-600",
@@ -330,47 +316,100 @@ export function generateSeedArticles(): SeedArticleMetadata[] {
     "from-rose-500 to-red-650"
   ];
 
-  for (const cat of categories) {
-    let newIndex = 0;
-    for (const item of cat.items) {
-      // Pick author and gradient deterministically
-      const auth = authors[newIndex % authors.length];
-      const grad = gradients[newIndex % gradients.length];
-      
-      allArticlesList.push({
-        id: item.s,
-        title: item.t,
-        meta_title: item.t.substring(0, 60),
-        meta_description: item.ex.substring(0, 160),
-        excerpt: item.ex,
-        category_name: cat.name,
-        category_slug: cat.slug,
-        read_time: `Lectura de ${10 + (newIndex % 6)} min`,
-        image_url: "", // No images for new ones
-        image_gradient: grad,
-        author: auth,
-        keyword: item.k
-      });
-      newIndex++;
-    }
+  // Add new entries for Comparativas
+  let idx = 0;
+  for (const item of COMPARATIVAS_NEW) {
+    compList.push({
+      id: item.s,
+      title: item.t,
+      meta_title: item.t.substring(0, 60),
+      meta_description: item.ex.substring(0, 160),
+      excerpt: item.ex,
+      category_name: "Comparativas",
+      category_slug: "comparativas",
+      read_time: `Lectura de ${10 + (idx % 6)} min`,
+      image_url: "",
+      image_gradient: gradients[idx % gradients.length],
+      author: authors[idx % authors.length],
+      keyword: item.k
+    });
+    idx++;
   }
 
-  // Sort them so that we can distribute dates cleanly.
-  allArticlesList.sort((a, b) => a.title.localeCompare(b.title));
+  // Add new entries for Coberturas
+  idx = 0;
+  for (const item of COBERTURAS_NEW) {
+    cobList.push({
+      id: item.s,
+      title: item.t,
+      meta_title: item.t.substring(0, 60),
+      meta_description: item.ex.substring(0, 160),
+      excerpt: item.ex,
+      category_name: "Coberturas",
+      category_slug: "coberturas",
+      read_time: `Lectura de ${10 + (idx % 6)} min`,
+      image_url: "",
+      image_gradient: gradients[idx % gradients.length],
+      author: authors[idx % authors.length],
+      keyword: item.k
+    });
+    idx++;
+  }
 
-  // Now assign date offsets:
-  // First 40 articles get offset from -39 to 0 (published)
-  // Remaining 60 articles get offset from 1 to 60 (scheduled)
+  // Add new entries for Tipos de Vivienda
+  idx = 0;
+  for (const item of VIVIENDAS_NEW) {
+    vivList.push({
+      id: item.s,
+      title: item.t,
+      meta_title: item.t.substring(0, 60),
+      meta_description: item.ex.substring(0, 160),
+      excerpt: item.ex,
+      category_name: "Tipos de Vivienda",
+      category_slug: "tipos-de-vivienda",
+      read_time: `Lectura de ${10 + (idx % 6)} min`,
+      image_url: "",
+      image_gradient: gradients[idx % gradients.length],
+      author: authors[idx % authors.length],
+      keyword: item.k
+    });
+    idx++;
+  }
+
+  // Add new entries for Guías
+  idx = 0;
+  for (const item of GUIAS_NEW) {
+    guiaList.push({
+      id: item.s,
+      title: item.t,
+      meta_title: item.t.substring(0, 60),
+      meta_description: item.ex.substring(0, 160),
+      excerpt: item.ex,
+      category_name: "Guías",
+      category_slug: "guias",
+      read_time: `Lectura de ${10 + (idx % 6)} min`,
+      image_url: "",
+      image_gradient: gradients[idx % gradients.length],
+      author: authors[idx % authors.length],
+      keyword: item.k
+    });
+    idx++;
+  }
+
+  // Interleave the items in a strict cyclical sequence of categories:
+  // comparativas -> coberturas -> tipos-de-vivienda -> guias
+  const allArticlesList: any[] = [];
+  for (let i = 0; i < 25; i++) {
+    allArticlesList.push(compList[i]);
+    allArticlesList.push(cobList[i]);
+    allArticlesList.push(vivList[i]);
+    allArticlesList.push(guiaList[i]);
+  }
+
+  // Now assign date offsets sequentially (-39 to 60)
   for (let i = 0; i < allArticlesList.length; i++) {
     const item = allArticlesList[i];
-    let offset = 0;
-    if (i < 40) {
-      // Published days: -39, -38, ..., 0
-      offset = i - 39;
-    } else {
-      // Scheduled days: 1, 2, ..., 60
-      offset = i - 39; // Since index i goes from 40 to 99, i - 39 goes from 1 to 60
-    }
+    const offset = i - 39; // i=0 -> -39 (earliest), i=39 -> 0 (today), i=99 -> 60 (latest)
 
     const pubDate = getDeterministicDate(offset, item.title);
     
