@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { Outfit, Inter } from "next/font/google";
 import CookieBanner from "@/components/CookieBanner";
+import { syncUploads } from "@/lib/syncUploads";
 import "./globals.css";
 
 const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
   display: "swap",
-});
+ });
 
 const inter = Inter({
   variable: "--font-inter",
@@ -31,6 +32,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Sync static uploads at startup
+  syncUploads().catch(console.error);
+
   return (
     <html
       lang="es"
