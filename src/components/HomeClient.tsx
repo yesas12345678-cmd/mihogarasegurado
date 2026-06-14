@@ -40,15 +40,27 @@ export default function HomeClient({ initialArticles }: HomeClientProps) {
     }
   }, []);
 
+  const normalizeText = (text: string): string => {
+    return text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  };
+
   const filteredArticles = initialArticles.filter((article) => {
     const matchesCategory = selectedCategory
       ? article.category.slug === selectedCategory
       : true;
     
-    const matchesSearch = searchTerm
-      ? article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        article.excerpt.toLowerCase().includes(searchTerm.toLowerCase())
-      : true;
+    if (!searchTerm) return matchesCategory;
+
+    const normalizedSearch = normalizeText(searchTerm);
+    const normalizedTitle = normalizeText(article.title);
+    const normalizedExcerpt = normalizeText(article.excerpt);
+
+    const matchesSearch =
+      normalizedTitle.includes(normalizedSearch) ||
+      normalizedExcerpt.includes(normalizedSearch);
 
     return matchesCategory && matchesSearch;
   });
