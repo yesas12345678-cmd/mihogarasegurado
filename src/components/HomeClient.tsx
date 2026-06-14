@@ -22,20 +22,36 @@ const CATEGORIES = [
 
 export default function HomeClient({ initialArticles }: HomeClientProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
+      
       const categoryParam = params.get("category");
       if (categoryParam && ["comparativas", "coberturas", "tipos-de-vivienda", "guias"].includes(categoryParam)) {
         setSelectedCategory(categoryParam);
       }
+
+      const searchParam = params.get("search");
+      if (searchParam) {
+        setSearchTerm(searchParam);
+      }
     }
   }, []);
 
-  const filteredArticles = selectedCategory
-    ? initialArticles.filter((article) => article.category.slug === selectedCategory)
-    : initialArticles;
+  const filteredArticles = initialArticles.filter((article) => {
+    const matchesCategory = selectedCategory
+      ? article.category.slug === selectedCategory
+      : true;
+    
+    const matchesSearch = searchTerm
+      ? article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        article.excerpt.toLowerCase().includes(searchTerm.toLowerCase())
+      : true;
+
+    return matchesCategory && matchesSearch;
+  });
 
   const handleCategorySelect = (slug: string) => {
     setSelectedCategory(slug);
@@ -50,10 +66,28 @@ export default function HomeClient({ initialArticles }: HomeClientProps) {
     }
   };
 
+  const handleSearchChange = (query: string) => {
+    setSearchTerm(query);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (query) {
+        url.searchParams.set("search", query);
+      } else {
+        url.searchParams.delete("search");
+      }
+      window.history.pushState({}, "", url.toString());
+    }
+  };
+
   return (
     <>
-      {/* Header / Navbar */}
-      <Header currentCategory={selectedCategory} onSelectCategory={handleCategorySelect} />
+      {/* Header / Navbar with search state and callbacks */}
+      <Header 
+        currentCategory={selectedCategory} 
+        onSelectCategory={handleCategorySelect}
+        searchTerm={searchTerm}
+        onSearchChange={handleSearchChange}
+      />
 
       {/* Main Content Area */}
       <main className="flex-1">
@@ -91,7 +125,10 @@ export default function HomeClient({ initialArticles }: HomeClientProps) {
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between mb-8 border-b border-slate-200 pb-5">
             <div>
               <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">
-                Últimos Artículos Publicados
+                {searchTerm 
+                  ? `Resultados para "${searchTerm}"`
+                  : "Últimos Artículos Publicados"
+                }
               </h2>
               <p className="font-sans text-sm text-slate-500 mt-1">
                 Información analizada y redactada por expertos independientes en consumo.
@@ -128,7 +165,7 @@ export default function HomeClient({ initialArticles }: HomeClientProps) {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 bg-white border border-slate-100 rounded-3xl" id="no-articles-message">
+            <div className="text-center py-16 bg-white border border-slate-200 rounded-3xl p-8" id="no-articles-message">
               <svg
                 className="mx-auto h-12 w-12 text-slate-400 mb-4"
                 fill="none"
@@ -143,11 +180,20 @@ export default function HomeClient({ initialArticles }: HomeClientProps) {
                 />
               </svg>
               <h3 className="font-display text-lg font-bold text-slate-900 mb-1">
-                No hay artículos disponibles
+                No se encontraron artículos
               </h3>
-              <p className="font-sans text-sm text-slate-500 max-w-sm mx-auto">
-                No hemos encontrado artículos en la categoría seleccionada actualmente. Prueba seleccionando otra categoría.
+              <p className="font-sans text-sm text-slate-500 max-w-sm mx-auto mb-6">
+                No hemos encontrado ningún artículo que coincida con tu búsqueda o filtros actuales. ¡Prueba buscando otro tema!
               </p>
+              <button
+                onClick={() => {
+                  handleCategorySelect("");
+                  handleSearchChange("");
+                }}
+                className="inline-flex items-center justify-center rounded-xl bg-teal-600 px-4 py-2 text-xs font-semibold text-white hover:bg-teal-700 transition duration-200 cursor-pointer shadow-sm"
+              >
+                Limpiar filtros y ver todos
+              </button>
             </div>
           )}
 
