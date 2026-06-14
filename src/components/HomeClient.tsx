@@ -23,6 +23,11 @@ const CATEGORIES = [
 export default function HomeClient({ initialArticles }: HomeClientProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [visibleCount, setVisibleCount] = useState<number>(12);
+
+  useEffect(() => {
+    setVisibleCount(12);
+  }, [selectedCategory, searchTerm]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -64,6 +69,8 @@ export default function HomeClient({ initialArticles }: HomeClientProps) {
 
     return matchesCategory && matchesSearch;
   });
+
+  const visibleArticles = filteredArticles.slice(0, visibleCount);
 
   const handleCategorySelect = (slug: string) => {
     setSelectedCategory(slug);
@@ -171,11 +178,33 @@ export default function HomeClient({ initialArticles }: HomeClientProps) {
 
           {/* Grid responsive of cards */}
           {filteredArticles.length > 0 ? (
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3" id="articles-grid">
-              {filteredArticles.map((article) => (
-                <ArticleCard key={article.id} article={article} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3" id="articles-grid">
+                {visibleArticles.map((article) => (
+                  <ArticleCard key={article.id} article={article} />
+                ))}
+              </div>
+              
+              {filteredArticles.length > visibleCount && (
+                <div className="flex justify-center mt-12 mb-6" id="pagination-container">
+                  <button
+                    onClick={() => setVisibleCount((prev) => prev + 24)}
+                    className="group relative inline-flex items-center gap-2 px-8 py-3.5 overflow-hidden rounded-xl bg-teal-600 font-sans text-sm font-semibold text-white transition-all duration-300 hover:bg-teal-700 hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-xl hover:shadow-teal-600/10 cursor-pointer"
+                    id="ver-mas-btn"
+                  >
+                    <span>Ver más artículos</span>
+                    <svg 
+                      className="w-4 h-4 transition-transform duration-300 group-hover:translate-y-0.5" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-16 bg-white border border-slate-200 rounded-3xl p-8" id="no-articles-message">
               <svg
