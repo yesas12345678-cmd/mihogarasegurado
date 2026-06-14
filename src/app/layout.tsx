@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Outfit, Inter } from "next/font/google";
 import CookieBanner from "@/components/CookieBanner";
-import { syncUploads } from "@/lib/syncUploads";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -32,9 +31,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Sync static uploads at startup
-  syncUploads().catch(console.error);
-
   return (
     <html
       lang="es"

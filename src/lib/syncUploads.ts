@@ -6,6 +6,11 @@ let hasSynced = false;
 export async function syncUploads() {
   if (hasSynced) return;
   
+  // Skip syncing during the next build phase
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    return;
+  }
+  
   try {
     const staticDir = path.join(process.cwd(), "public", "uploads_static");
     const targetDir = path.join(process.cwd(), "public", "uploads");
