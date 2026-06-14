@@ -28,6 +28,7 @@ export default function AdminClient({ initialArticles }: AdminClientProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [viewTab, setViewTab] = useState<"all" | "empty">("all");
 
   // Helper to count words in HTML content
   const getWordCount = (content: string | null | undefined): number => {
@@ -84,8 +85,14 @@ export default function AdminClient({ initialArticles }: AdminClientProps) {
       (selectedStatus === "published" && published) ||
       (selectedStatus === "scheduled" && !published);
 
-    return matchesSearch && matchesCategory && matchesStatus;
+    const wordCount = getWordCount(article.content);
+    const matchesTab = viewTab === "all" || (viewTab === "empty" && wordCount === 0);
+
+    return matchesSearch && matchesCategory && matchesStatus && matchesTab;
   });
+
+  const totalAllCount = initialArticles.length;
+  const totalEmptyCount = initialArticles.filter((a) => getWordCount(a.content) === 0).length;
 
   return (
     <div className="space-y-6">
@@ -145,13 +152,59 @@ export default function AdminClient({ initialArticles }: AdminClientProps) {
 
       {/* Main Articles List Table */}
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-          <h2 className="font-display text-lg font-bold text-slate-900">
-            Listado de Entradas ({filteredArticles.length} filtradas de {initialArticles.length})
-          </h2>
-          <span className="font-sans text-xs text-slate-500">
-            Último orden por fecha de publicación
-          </span>
+        <div className="border-b border-slate-200 bg-slate-50/50">
+          {/* Tab buttons */}
+          <div className="flex border-b border-slate-150">
+            <button
+              id="tab-all-articles"
+              onClick={() => setViewTab("all")}
+              className={`flex-1 md:flex-none px-6 py-4 text-sm font-sans font-bold border-b-2 transition-all duration-200 cursor-pointer ${
+                viewTab === "all"
+                  ? "border-teal-600 text-teal-600 bg-white"
+                  : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50/30"
+              }`}
+            >
+              Todos los artículos
+              <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
+                viewTab === "all" ? "bg-teal-100 text-teal-700" : "bg-slate-250 text-slate-600"
+              }`}>
+                {totalAllCount}
+              </span>
+            </button>
+            <button
+              id="tab-empty-articles"
+              onClick={() => setViewTab("empty")}
+              className={`flex-1 md:flex-none px-6 py-4 text-sm font-sans font-bold border-b-2 transition-all duration-200 cursor-pointer ${
+                viewTab === "empty"
+                  ? "border-teal-600 text-teal-600 bg-white"
+                  : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50/30"
+              }`}
+            >
+              Artículos vacíos
+              <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
+                viewTab === "empty" 
+                  ? "bg-teal-100 text-teal-700" 
+                  : totalEmptyCount > 0 
+                    ? "bg-amber-100 text-amber-700 animate-pulse font-extrabold" 
+                    : "bg-slate-250 text-slate-600"
+              }`}>
+                {totalEmptyCount}
+              </span>
+            </button>
+          </div>
+          
+          {/* List count and info */}
+          <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-white">
+            <h2 className="font-display text-sm font-bold text-slate-700">
+              {viewTab === "all" 
+                ? `Todos los Artículos (${filteredArticles.length} mostrados)`
+                : `Artículos sin contenido - 0 palabras (${filteredArticles.length} mostrados)`
+              }
+            </h2>
+            <span className="font-sans text-xs text-slate-500">
+              Último orden por fecha de publicación
+            </span>
+          </div>
         </div>
 
         {filteredArticles.length > 0 ? (
