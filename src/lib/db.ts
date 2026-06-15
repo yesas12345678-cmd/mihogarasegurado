@@ -114,6 +114,137 @@ export async function initDB() {
     } else {
       console.log(`Database already contains ${count} articles. Skipping seeding.`);
     }
+
+    // Ensure all articles have semantic cover and middle images populated
+    const { rows: articleRows } = await client.query("SELECT id, title, category_slug, image_url, content FROM articles");
+    let needsUpdate = false;
+    for (const row of articleRows) {
+      if (!row.image_url || row.image_url.includes('gradient') || (row.content && row.content.trim().startsWith('{') && !row.content.includes('<img'))) {
+        needsUpdate = true;
+        break;
+      }
+    }
+    
+    if (needsUpdate) {
+      console.log("Database patching: updating articles with semantic cover and middle images...");
+      const COVER_IMAGES = {
+        cozy_house: "/uploads/cover_cozy_house.png",
+        kitchen_water: "/uploads/cover_kitchen_water.png",
+        apartment_view: "/uploads/cover_apartment_view.png",
+        reclaim_form: "/uploads/cover_reclaim_form.png",
+        house_keys: "/uploads/cover_house_keys.png"
+      };
+
+      const MIDDLE_IMAGES = {
+        broken_glass: "/uploads/middle_broken_glass.png",
+        burnt_socket: "/uploads/middle_burnt_socket.png",
+        water_leak: "/uploads/middle_water_leak.png",
+        house_interior: "/uploads/middle_house_interior.png",
+        contract_signing: "/uploads/middle_contract_signing.png"
+      };
+
+      const getSemanticCoverImage = (categorySlug: string, title: string) => {
+        const t = title.toLowerCase();
+        if (categorySlug === "comparativas") {
+          if (t.includes("alquiler") || t.includes("impago")) return COVER_IMAGES.house_keys;
+          return COVER_IMAGES.cozy_house;
+        }
+        if (categorySlug === "coberturas") {
+          if (t.includes("agua") || t.includes("gotera") || t.includes("filtracion") || t.includes("tuberia") || t.includes("helada")) {
+            return COVER_IMAGES.kitchen_water;
+          }
+          return COVER_IMAGES.reclaim_form;
+        }
+        if (categorySlug === "tipos-de-vivienda") {
+          if (t.includes("chalet") || t.includes("unifamiliar") || t.includes("campo") || t.includes("jardin") || t.includes("piscina") || t.includes("masia")) {
+            return COVER_IMAGES.cozy_house;
+          }
+          if (t.includes("piso") || t.includes("atico") || t.includes("altura") || t.includes("compartido") || t.includes("loft")) {
+            return COVER_IMAGES.apartment_view;
+          }
+          return COVER_IMAGES.house_keys;
+        }
+        return COVER_IMAGES.reclaim_form;
+      };
+
+      const getSemanticMiddleImage = (title: string) => {
+        const t = title.toLowerCase();
+        if (t.includes("agua") || t.includes("gotera") || t.includes("filtracion") || t.includes("tuberia") || t.includes("helada") || t.includes("humedades")) {
+          return MIDDLE_IMAGES.water_leak;
+        }
+        if (t.includes("robo") || t.includes("trastero") || t.includes("cristal") || t.includes("llave") || t.includes("cerrajero") || t.includes("vandalismo") || t.includes("atraco")) {
+          return MIDDLE_IMAGES.broken_glass;
+        }
+        if (t.includes("electrico") || t.includes("cortocircuito") || t.includes("luz") || t.includes("incendio") || t.includes("chimenea") || t.includes("placas") || t.includes("rayo") || t.includes("apagón")) {
+          return MIDDLE_IMAGES.burnt_socket;
+        }
+        if (t.includes("contrato") || t.includes("reclamar") || t.includes("perito") || t.includes("baja") || t.includes("cancelar") || t.includes("proporcional") || t.includes("impago") || t.includes("ley") || t.includes("legal") || t.includes("defensa")) {
+          return MIDDLE_IMAGES.contract_signing;
+        }
+        return MIDDLE_IMAGES.house_interior;
+      };
+
+      const extractHtmlContent = (rawContent: string) => {
+        if (!rawContent) return "";
+        const trimmed = rawContent.trim();
+        if (!trimmed.startsWith('{')) return trimmed;
+        try {
+          const parsed = JSON.parse(trimmed);
+          return parsed.content || "";
+        } catch (e) {
+          const match = trimmed.match(/"content"\s*:\s*"([\s\S]*?)"\s*\}\s*$/);
+          if (match) {
+            return match[1]
+              .replace(/\\"/g, '"')
+              .replace(/\\n/g, '\n')
+              .replace(/\\r/g, '\r')
+              .replace(/\\t/g, '\t');
+          }
+          try {
+            const cleaned = trimmed.replace(/[\n\r\t]/g, (m) => m === '\n' ? '\\n' : m === '\r' ? '\\r' : '\\t');
+            const parsed = JSON.parse(cleaned);
+            return parsed.content || "";
+          } catch (e2) {
+            return trimmed;
+          }
+        }
+      };
+
+      for (const row of articleRows) {
+        const newCoverImage = getSemanticCoverImage(row.category_slug, row.title);
+        const htmlContent = extractHtmlContent(row.content);
+        
+        let finalHtml = htmlContent;
+        finalHtml = finalHtml.replace(/<div class="my-8 rounded-2xl[\s\S]*?<\/div>/gi, "");
+        finalHtml = finalHtml.replace(/<img[\s\S]*?\/>/gi, "");
+
+        const middleImageUrl = getSemanticMiddleImage(row.title);
+        const middleImageTag = `
+<div class="my-8 rounded-2xl overflow-hidden border border-slate-200 shadow-md relative aspect-[16/9] w-full max-w-2xl mx-auto group">
+  <img src="${middleImageUrl}" alt="Ilustración sobre ${row.title}" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
+</div>
+`;
+        const paragraphs = finalHtml.split('</p>');
+        if (paragraphs.length >= 3) {
+          paragraphs.splice(2, 0, middleImageTag);
+          finalHtml = paragraphs.join('</p>');
+        } else {
+          finalHtml += middleImageTag;
+        }
+
+        const cleanJson = {
+          title: row.title,
+          content: finalHtml
+        };
+        const contentValue = JSON.stringify(cleanJson);
+
+        await client.query(
+          "UPDATE articles SET image_url = $1, content = $2 WHERE id = $3",
+          [newCoverImage, contentValue, row.id]
+        );
+      }
+      console.log("Database patching completed successfully!");
+    }
   } catch (err) {
     console.error("Error initializing database:", err);
     throw err;
