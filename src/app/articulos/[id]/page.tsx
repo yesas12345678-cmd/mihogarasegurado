@@ -106,6 +106,31 @@ export default async function ArticlePage({ params }: PageProps) {
 
   const matchedAuthor = authorsData.find((a) => article.author.toLowerCase().trim().startsWith(a.name.toLowerCase().trim()));
 
+  let displayContent = article.content;
+  if (article.content.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(article.content);
+      displayContent = parsed.content || "";
+    } catch (e) {
+      const match = article.content.match(/"content"\s*:\s*"([\s\S]*?)"\s*\}\s*$/);
+      if (match) {
+        displayContent = match[1]
+          .replace(/\\"/g, '"')
+          .replace(/\\n/g, '\n')
+          .replace(/\\r/g, '\r')
+          .replace(/\\t/g, '\t');
+      } else {
+        try {
+          const cleaned = article.content.replace(/[\n\r\t]/g, (m) => m === '\n' ? '\\n' : m === '\r' ? '\\r' : '\\t');
+          const parsed = JSON.parse(cleaned);
+          displayContent = parsed.content || "";
+        } catch (e2) {
+          console.error("Failed to parse content JSON:", e2);
+        }
+      }
+    }
+  }
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -227,7 +252,7 @@ export default async function ArticlePage({ params }: PageProps) {
 
             {/* Body Content (renders raw HTML for custom Tailwind CSS designs) */}
             <div className="article-body font-sans text-base leading-relaxed text-slate-700">
-              <div dangerouslySetInnerHTML={{ __html: article.content }} />
+              <div dangerouslySetInnerHTML={{ __html: displayContent }} />
             </div>
           </div>
         </article>
