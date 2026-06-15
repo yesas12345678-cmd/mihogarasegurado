@@ -17,7 +17,7 @@ export default function ArticleCard({ article }: ArticleCardProps) {
   const currentCategoryStyle = categoryStyles[article.category.slug] || "bg-slate-50 text-slate-700 border-slate-100";
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-200/50">
+    <article className="relative group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-200/50">
       {/* Visual Image */}
       <div className="relative aspect-[16/10] w-full overflow-hidden flex items-center justify-center bg-slate-100">
         {article.imageUrl ? (

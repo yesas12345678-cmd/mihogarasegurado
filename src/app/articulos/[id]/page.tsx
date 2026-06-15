@@ -98,6 +98,14 @@ export default async function ArticlePage({ params }: PageProps) {
     notFound();
   }
 
+  const authorsData = [
+    { name: "Patricia G.", imageUrl: "/uploads/author_patricia.png" },
+    { name: "Carlos M.", imageUrl: "/uploads/author_carlos.png" },
+    { name: "Elena R.", imageUrl: "/uploads/author_elena.png" },
+  ];
+
+  const matchedAuthor = authorsData.find((a) => article.author.toLowerCase().trim().startsWith(a.name.toLowerCase().trim()));
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -198,9 +206,19 @@ export default async function ArticlePage({ params }: PageProps) {
 
             {/* Author info */}
             <div className="flex items-center gap-3 border-y border-slate-150 py-4 mb-8">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-600 text-white font-semibold text-sm">
-                {article.author.split(" ")[0][0]}
-              </div>
+              {matchedAuthor ? (
+                <div className="h-10 w-10 rounded-full overflow-hidden shrink-0 relative bg-slate-200 border border-slate-100">
+                  <img
+                    src={matchedAuthor.imageUrl}
+                    alt={article.author}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-600 text-white font-semibold text-sm">
+                  {article.author.split(" ")[0][0]}
+                </div>
+              )}
               <div>
                 <p className="font-sans text-sm font-bold text-slate-900">{article.author}</p>
                 <p className="font-sans text-xs text-slate-500">Colaborador Experto de Mi Hogar Asegurado</p>

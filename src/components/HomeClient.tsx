@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AboutUs from "@/components/AboutUs";
@@ -21,6 +22,7 @@ const CATEGORIES = [
 ];
 
 export default function HomeClient({ initialArticles }: HomeClientProps) {
+  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [visibleCount, setVisibleCount] = useState<number>(12);
@@ -75,26 +77,26 @@ export default function HomeClient({ initialArticles }: HomeClientProps) {
   const handleCategorySelect = (slug: string) => {
     setSelectedCategory(slug);
     if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
+      const params = new URLSearchParams(window.location.search);
       if (slug) {
-        url.searchParams.set("category", slug);
+        params.set("category", slug);
       } else {
-        url.searchParams.delete("category");
+        params.delete("category");
       }
-      window.history.pushState({}, "", url.toString());
+      router.push(`/?${params.toString()}`, { scroll: false });
     }
   };
 
   const handleSearchChange = (query: string) => {
     setSearchTerm(query);
     if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
+      const params = new URLSearchParams(window.location.search);
       if (query) {
-        url.searchParams.set("search", query);
+        params.set("search", query);
       } else {
-        url.searchParams.delete("search");
+        params.delete("search");
       }
-      window.history.pushState({}, "", url.toString());
+      router.push(`/?${params.toString()}`, { scroll: false });
     }
   };
 
@@ -165,7 +167,7 @@ export default function HomeClient({ initialArticles }: HomeClientProps) {
                     className={`font-sans text-xs font-semibold px-3 py-1.5 rounded-full border transition-all duration-200 cursor-pointer ${
                       isActive
                         ? "bg-teal-600 border-teal-600 text-white shadow-sm shadow-teal-600/10"
-                        : "bg-white border-slate-200 text-slate-600 hover:border-slate-350 hover:bg-slate-50 hover:text-slate-900"
+                        : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
                     }`}
                     id={`filter-btn-${category.slug || "all"}`}
                   >
