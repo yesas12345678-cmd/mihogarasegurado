@@ -9,7 +9,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate-articles": "node scripts/generateArticles.mjs",
+    "schedule-daily-articles": "node scripts/scheduleDailyArticles.mjs"
   },
   "dependencies": {
     "docx": "^9.7.1",

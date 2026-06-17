@@ -119,70 +119,17 @@ export async function initDB() {
     const { rows: articleRows } = await client.query("SELECT id, title, category_slug, image_url, content FROM articles");
     let needsUpdate = false;
     for (const row of articleRows) {
-      if (!row.image_url || row.image_url.includes('gradient') || (row.content && row.content.trim().startsWith('{') && !row.content.includes('<img'))) {
+      if (!row.image_url || row.image_url.includes('gradient') || row.image_url.includes('cover_') || (row.content && row.content.trim().startsWith('{') && !row.content.includes('pexels.com'))) {
         needsUpdate = true;
         break;
       }
     }
     
     if (needsUpdate) {
-      console.log("Database patching: updating articles with semantic cover and middle images...");
-      const COVER_IMAGES = {
-        cozy_house: "/uploads/cover_cozy_house.png",
-        kitchen_water: "/uploads/cover_kitchen_water.png",
-        apartment_view: "/uploads/cover_apartment_view.png",
-        reclaim_form: "/uploads/cover_reclaim_form.png",
-        house_keys: "/uploads/cover_house_keys.png"
-      };
-
-      const MIDDLE_IMAGES = {
-        broken_glass: "/uploads/middle_broken_glass.png",
-        burnt_socket: "/uploads/middle_burnt_socket.png",
-        water_leak: "/uploads/middle_water_leak.png",
-        house_interior: "/uploads/middle_house_interior.png",
-        contract_signing: "/uploads/middle_contract_signing.png"
-      };
-
-      const getSemanticCoverImage = (categorySlug: string, title: string) => {
-        const t = title.toLowerCase();
-        if (categorySlug === "comparativas") {
-          if (t.includes("alquiler") || t.includes("impago")) return COVER_IMAGES.house_keys;
-          return COVER_IMAGES.cozy_house;
-        }
-        if (categorySlug === "coberturas") {
-          if (t.includes("agua") || t.includes("gotera") || t.includes("filtracion") || t.includes("tuberia") || t.includes("helada")) {
-            return COVER_IMAGES.kitchen_water;
-          }
-          return COVER_IMAGES.reclaim_form;
-        }
-        if (categorySlug === "tipos-de-vivienda") {
-          if (t.includes("chalet") || t.includes("unifamiliar") || t.includes("campo") || t.includes("jardin") || t.includes("piscina") || t.includes("masia")) {
-            return COVER_IMAGES.cozy_house;
-          }
-          if (t.includes("piso") || t.includes("atico") || t.includes("altura") || t.includes("compartido") || t.includes("loft")) {
-            return COVER_IMAGES.apartment_view;
-          }
-          return COVER_IMAGES.house_keys;
-        }
-        return COVER_IMAGES.reclaim_form;
-      };
-
-      const getSemanticMiddleImage = (title: string) => {
-        const t = title.toLowerCase();
-        if (t.includes("agua") || t.includes("gotera") || t.includes("filtracion") || t.includes("tuberia") || t.includes("helada") || t.includes("humedades")) {
-          return MIDDLE_IMAGES.water_leak;
-        }
-        if (t.includes("robo") || t.includes("trastero") || t.includes("cristal") || t.includes("llave") || t.includes("cerrajero") || t.includes("vandalismo") || t.includes("atraco")) {
-          return MIDDLE_IMAGES.broken_glass;
-        }
-        if (t.includes("electrico") || t.includes("cortocircuito") || t.includes("luz") || t.includes("incendio") || t.includes("chimenea") || t.includes("placas") || t.includes("rayo") || t.includes("apagón")) {
-          return MIDDLE_IMAGES.burnt_socket;
-        }
-        if (t.includes("contrato") || t.includes("reclamar") || t.includes("perito") || t.includes("baja") || t.includes("cancelar") || t.includes("proporcional") || t.includes("impago") || t.includes("ley") || t.includes("legal") || t.includes("defensa")) {
-          return MIDDLE_IMAGES.contract_signing;
-        }
-        return MIDDLE_IMAGES.house_interior;
-      };
+      console.log("Database patching: updating articles with unique cover and middle images...");
+      
+      const validPexelsIdsPath = path.join(process.cwd(), "src", "data", "valid_pexels_ids.json");
+      const validPexelsIds = JSON.parse(fs.readFileSync(validPexelsIdsPath, "utf8"));
 
       const extractHtmlContent = (rawContent: string) => {
         if (!rawContent) return "";
@@ -210,15 +157,30 @@ export async function initDB() {
         }
       };
 
-      for (const row of articleRows) {
-        const newCoverImage = getSemanticCoverImage(row.category_slug, row.title);
-        const htmlContent = extractHtmlContent(row.content);
+      for (let i = 0; i < articleRows.length; i++) {
+        const row = articleRows[i];
         
+        // Check if this article had a unique seeded local image
+        const seededArticle = SEED_ARTICLES.find(a => a.id === row.id);
+        let coverUrl = "";
+        if (seededArticle && seededArticle.image_url && seededArticle.image_url.startsWith("/uploads/") && !seededArticle.image_url.includes("cover_") && !seededArticle.image_url.includes("middle_")) {
+          coverUrl = seededArticle.image_url;
+        } else {
+          // Assign unique cover image from valid Pexels IDs
+          const pexelsId = validPexelsIds[i % validPexelsIds.length];
+          coverUrl = `https://images.pexels.com/photos/${pexelsId}/pexels-photo-${pexelsId}.jpeg?auto=compress&cs=tinysrgb&w=800`;
+        }
+
+        const htmlContent = extractHtmlContent(row.content);
         let finalHtml = htmlContent;
+        // Strip any existing patched images
         finalHtml = finalHtml.replace(/<div class="my-8 rounded-2xl[\s\S]*?<\/div>/gi, "");
         finalHtml = finalHtml.replace(/<img[\s\S]*?\/>/gi, "");
 
-        const middleImageUrl = getSemanticMiddleImage(row.title);
+        // Assign a unique middle image from valid Pexels IDs (disjoint from cover IDs)
+        const middlePexelsId = validPexelsIds[(i + 120) % validPexelsIds.length];
+        const middleImageUrl = `https://images.pexels.com/photos/${middlePexelsId}/pexels-photo-${middlePexelsId}.jpeg?auto=compress&cs=tinysrgb&w=800`;
+
         const middleImageTag = `
 <div class="my-8 rounded-2xl overflow-hidden border border-slate-200 shadow-md relative aspect-[16/9] w-full max-w-2xl mx-auto group">
   <img src="${middleImageUrl}" alt="Ilustración sobre ${row.title}" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
@@ -240,10 +202,10 @@ export async function initDB() {
 
         await client.query(
           "UPDATE articles SET image_url = $1, content = $2 WHERE id = $3",
-          [newCoverImage, contentValue, row.id]
+          [coverUrl, contentValue, row.id]
         );
       }
-      console.log("Database patching completed successfully!");
+      console.log("Database patching completed successfully with unique images!");
     }
   } catch (err) {
     console.error("Error initializing database:", err);
