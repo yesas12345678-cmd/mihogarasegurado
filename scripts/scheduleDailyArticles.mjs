@@ -353,10 +353,20 @@ Parámetros de Entrada para este Artículo:
 *   Palabras Clave Principales (Keywords): ${prop.keyword}
 *   Categoría: ${prop.category_name}
 
-Recuerda: 
-1. Devolver estrictamente un objeto JSON que siga la estructura exacta definida en la sección 4 de las instrucciones.
-2. El artículo debe ser extremadamente largo, detallado y exhaustivo. Debe contener estrictamente entre 2.200 y 3.000 palabras de texto real (sin contar etiquetas HTML).
-3. BAJO NINGÚN CONCEPTO puede bajar de 1.200 palabras de texto real. Explica cada cobertura, exclusión, base legal e implicaciones periciales con total detalle para garantizar la máxima profundidad y longitud.
+REQUISITOS OBLIGATORIOS DE ESTRUCTURA Y LONGITUD (CRÍTICO):
+Para garantizar que el artículo tenga estrictamente entre 2.200 y 3.000 palabras de texto real (sin contar etiquetas HTML) y nunca baje de 2.000 palabras bajo ninguna circunstancia, DEBES desarrollar con extrema amplitud y de forma muy extensa cada una de las siguientes secciones en el HTML del campo 'content':
+
+1. INTRODUCCIÓN DETALLADA (mínimo 250 palabras): Pon en contexto el tema, antecedentes y su relevancia actual en el mercado asegurador de España.
+2. BASE LEGAL Y MARCO REGULATORIO (mínimo 300 palabras): Cita explícitamente y explica detalladamente las leyes españolas pertinentes (como la Ley 50/1980 de Contrato de Seguro o la Ley de Arrendamientos Urbanos si aplica).
+3. COBERTURAS TÉCNICAS AL DETALLE (mínimo 450 palabras): Explica de forma minuciosa qué se incluye, qué límites económicos, franquicias o capitales suelen establecerse y cómo actúan los peritos.
+4. EXCLUSIONES COMUNES Y LETRA PEQUEÑA (mínimo 400 palabras): Detalla exhaustivamente qué siniestros y bajo qué condiciones NO están cubiertos bajo ninguna circunstancia. Utiliza el bloque de alerta (ámbar) para llamar la atención del lector con explicaciones muy extensas.
+5. CONSEJOS PRÁCTICOS PARA EL CONSUMIDOR (mínimo 350 palabras): Recomendaciones clave a la hora de contratar o declarar un siniestro, explicando paso a paso. Utiliza el bloque de recomendación (teal).
+6. CASOS PRÁCTICOS Y EJEMPLOS DE LA VIDA REAL (mínimo 450 palabras): Explica detalladamente al menos tres casos reales de siniestros complejos en España, su resolución pericial, justificación técnica y la indemnización correspondiente. Utiliza una grilla de tarjetas.
+7. TABLA COMPARATIVA SEMÁNTICA (mínimo 250 palabras de texto descriptivo + tabla): Desarrolla un análisis comparativo y dibuja una tabla con estados de color semántico (Verde: Sí cubierto, Amarillo: Límite/Opcional, Rojo: Excluido).
+8. SECCIÓN DE PREGUNTAS FRECUENTES (FAQ) INTERACTIVA (mínimo 4 acordeones desplegables con <details>, con respuestas muy detalladas y explicativas de al menos 95 palabras cada una).
+9. CONCLUSIÓN Y RECOMENDACIÓN FINAL DEL PERITO (mínimo 200 palabras): Un resumen formal sobre cómo actuar y asegurar la tranquilidad del hogar.
+
+Por favor, no resumas ni uses viñetas cortas. Desarrolla cada párrafo extensamente para garantizar la máxima profundidad y alcanzar las 2.200 - 3.000 palabras totales. Si el contenido de 'content' tiene menos de 2.000 palabras de texto real, tu respuesta será rechazada.
 `;
 
     let finalResult = null;
@@ -398,12 +408,12 @@ Recuerda:
         const wordCount = getWordCount(parsedResult.content);
         console.log(`  -> Intento ${attempt}: El artículo tiene ${wordCount} palabras de texto real.`);
 
-        if (wordCount >= 1200) {
+        if (wordCount >= 2000) {
           finalResult = parsedResult;
           break;
         } else {
-          console.warn(`  -> ADVERTENCIA: El artículo generado tiene menos de 1200 palabras (${wordCount}). Reintentando con instrucciones de expansión estrictas...`);
-          extraInstruction = `\n\n[ATENCIÓN CRÍTICA: Tu redacción anterior contenía únicamente ${wordCount} palabras. Es obligatorio que el artículo tenga más de 1.500 palabras y nunca baje de 1.200 palabras. Por favor, reescribe el artículo con muchísima más profundidad: añade más casos prácticos de la vida real en España, explica las normativas legales en detalle (Ley 50/1980), detalla de forma exhaustiva las exclusiones de la póliza y expande todas las secciones y tablas para superar con creces el límite mínimo.]`;
+          console.warn(`  -> ADVERTENCIA: El artículo generado tiene menos de 2000 palabras (${wordCount}). Reintentando con instrucciones de expansión estrictas...`);
+          extraInstruction = `\n\n[ATENCIÓN CRÍTICA: Tu redacción anterior contenía únicamente ${wordCount} palabras. Es obligatorio que el artículo tenga más de 2.200 palabras y nunca baje de 2.000 palabras. Por favor, reescribe el artículo con muchísima más profundidad: duplica la extensión de cada H2 y H3, añade más casos prácticos detallados, cita textualmente artículos de la Ley 50/1980 de Contrato de Seguro, detalla de forma sumamente exhaustiva las exclusiones de la póliza y expande todas las explicaciones para superar ampliamente el límite mínimo de 2.000 palabras.]`;
         }
       } catch (err) {
         console.error(`  Error en intento ${attempt}:`, err.message);
