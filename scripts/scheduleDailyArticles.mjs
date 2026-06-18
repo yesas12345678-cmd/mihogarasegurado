@@ -70,7 +70,7 @@ const CATEGORY_IMAGES = {
   "guias": [
     "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&auto=format&fit=crop&q=60", // Oficina / ordenador / guías
     "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&auto=format&fit=crop&q=60", // Papeles / finanzas
-    "https://images.unsplash.com/photo-1560520653-9e0e4c89eb11?w=800&auto=format&fit=crop&q=60", // Revisión de documentos
+    "https://images.unsplash.com/photo-1560520653-9e0e4c89eb11?w=800&auto=format&fit=crop&q=60", // Review de documentos
     "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop&q=60"  // Redacción / análisis
   ]
 };
@@ -79,6 +79,13 @@ const CATEGORY_IMAGES = {
 function formatSpanishDate(d) {
   const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
   return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+// Clean HTML tag stripper to count words in the article text
+function getWordCount(html) {
+  if (!html) return 0;
+  const plainText = html.replace(/<[^>]*>/g, " ");
+  return plainText.trim().split(/\s+/).filter(Boolean).length;
 }
 
 // Cleaner/Extractor for JSON and HTML
@@ -189,14 +196,22 @@ async function main() {
   }
   const templateContent = fs.readFileSync(templatePath, "utf-8");
 
-  // 3. Solicitar a la IA 2 nuevas propuestas de artículos únicas y alineadas con el nicho
-  console.log(">> Solicitar 2 nuevas ideas a DeepSeek...");
-  const promptPropuestas = `
+  // 3. Solicitar a la IA propuestas de artículos únicas hasta obtener 2 válidas que no existan en la BD
+  let lasDosPropuestas = [];
+  let attemptsProp = 0;
+  const maxPropAttempts = 3;
+
+  while (lasDosPropuestas.length < 2 && attemptsProp < maxPropAttempts) {
+    attemptsProp++;
+    console.log(`>> Solicitar nuevas ideas a DeepSeek (Intento ${attemptsProp})...`);
+    
+    const promptPropuestas = `
 Eres el director editorial de mihogarasegurado.com, un portal en Español especializado en seguros de hogar en España, coberturas, comparativas de pólizas y guías para el consumidor.
 Queremos publicar exactamente DOS artículos hoy en la web. Deben ser temas de gran interés, optimizados para SEO y 100% únicos.
 
 Aquí está la lista de artículos que YA están en la web:
 ${existingTitlesList}
+${lasDosPropuestas.map(p => ` - ${p.title} (${p.keyword})`).join("\n")}
 
 Por favor, propón DOS temas completamente nuevos en español que no estén en la lista anterior.
 Debes devolver la respuesta estrictamente como un objeto JSON con la siguiente estructura:
@@ -227,70 +242,86 @@ Debes devolver la respuesta estrictamente como un objeto JSON con la siguiente e
 Devuelve únicamente el objeto JSON.
 `;
 
-  let responsePropuestasText = "";
-  try {
-    const res = await fetch("https://api.deepseek.com/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: [
-          { role: "system", content: "Eres un director editorial que responde estrictamente en JSON." },
-          { role: "user", content: promptPropuestas }
-        ],
-        temperature: 0.7,
-        response_format: { type: "json_object" }
-      })
-    });
+    let responsePropuestasText = "";
+    try {
+      const res = await fetch("https://api.deepseek.com/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "deepseek-chat",
+          messages: [
+            { role: "system", content: "Eres un director editorial que responde estrictamente en JSON." },
+            { role: "user", content: promptPropuestas }
+          ],
+          temperature: 0.7,
+          response_format: { type: "json_object" }
+        })
+      });
 
-    if (!res.ok) {
-      throw new Error(`Error en API al proponer temas: ${res.statusText}`);
-    }
-    const data = await res.json();
-    responsePropuestasText = data.choices[0].message.content;
-  } catch (err) {
-    console.error("Error obteniendo propuestas de la IA:", err);
-    process.exit(1);
-  }
-
-  let propuestas = [];
-  try {
-    let cleanJSON = responsePropuestasText.trim();
-    if (cleanJSON.startsWith("```")) {
-      cleanJSON = cleanJSON
-        .replace(/^```json\s*/i, "")
-        .replace(/^```\s*/i, "")
-        .replace(/```$/s, "")
-        .trim();
-    }
-    
-    const parsed = JSON.parse(cleanJSON);
-    propuestas = parsed.propuestas || parsed.articles || parsed.articlesList || parsed;
-    if (!Array.isArray(propuestas)) {
-      if (typeof propuestas === "object" && propuestas !== null) {
-        propuestas = Object.values(propuestas).find(val => Array.isArray(val)) || [];
-      } else {
-        throw new Error("El JSON parseado no contiene un array válido de propuestas");
+      if (!res.ok) {
+        throw new Error(`Error en API al proponer temas: ${res.statusText}`);
       }
+      const data = await res.json();
+      responsePropuestasText = data.choices[0].message.content;
+    } catch (err) {
+      console.error("Error obteniendo propuestas de la IA:", err);
+      continue;
     }
-  } catch (e) {
-    console.error("Error parseando el JSON de propuestas. Respuesta cruda:", responsePropuestasText);
+
+    try {
+      let cleanJSON = responsePropuestasText.trim();
+      if (cleanJSON.startsWith("```")) {
+        cleanJSON = cleanJSON
+          .replace(/^```json\s*/i, "")
+          .replace(/^```\s*/i, "")
+          .replace(/```$/s, "")
+          .trim();
+      }
+      
+      const parsed = JSON.parse(cleanJSON);
+      let propuestasObtenidas = parsed.propuestas || parsed.articles || parsed.articlesList || parsed;
+      if (!Array.isArray(propuestasObtenidas)) {
+        if (typeof propuestasObtenidas === "object" && propuestasObtenidas !== null) {
+          propuestasObtenidas = Object.values(propuestasObtenidas).find(val => Array.isArray(val)) || [];
+        } else {
+          continue;
+        }
+      }
+
+      // Validar y filtrar duplicados programáticamente contra la base de datos
+      for (const p of propuestasObtenidas) {
+        const keywordNorm = p.keyword.toLowerCase().trim();
+        const slugNorm = p.slug.toLowerCase().trim();
+
+        const isKeywordDup = existingArticles.some(a => a.keyword && a.keyword.toLowerCase().trim() === keywordNorm) || 
+                             lasDosPropuestas.some(lp => lp.keyword.toLowerCase().trim() === keywordNorm);
+        const isSlugDup = existingArticles.some(a => a.id.toLowerCase().trim() === slugNorm) ||
+                          lasDosPropuestas.some(lp => lp.slug.toLowerCase().trim() === slugNorm);
+
+        if (!isKeywordDup && !isSlugDup) {
+          lasDosPropuestas.push(p);
+          if (lasDosPropuestas.length === 2) break;
+        } else {
+          console.warn(`[DUPLICADO] Filtrada propuesta con keyword '${p.keyword}' o slug '${p.slug}'`);
+        }
+      }
+    } catch (e) {
+      console.error("Error parseando el JSON de propuestas:", e.message);
+    }
+  }
+
+  if (lasDosPropuestas.length < 2) {
+    console.error("ERROR: No se pudieron obtener suficientes propuestas únicas que no estén ya en la base de datos.");
     process.exit(1);
   }
 
-  console.log(`[OK] Propuestas recibidas:`);
-  propuestas.slice(0, 2).forEach((p, idx) => {
+  console.log(`[OK] Propuestas únicas seleccionadas:`);
+  lasDosPropuestas.forEach((p, idx) => {
     console.log(`  ${idx + 1}. [${p.category_name}] ${p.title} (Keyword: ${p.keyword})`);
   });
-
-  const lasDosPropuestas = propuestas.slice(0, 2);
-  if (lasDosPropuestas.length < 2) {
-    console.error("ERROR: No se recibieron suficientes propuestas de la IA. Abortando.");
-    process.exit(1);
-  }
 
   // Define random publication hours of today
   const randomTimes = [
@@ -322,14 +353,18 @@ Parámetros de Entrada para este Artículo:
 *   Palabras Clave Principales (Keywords): ${prop.keyword}
 *   Categoría: ${prop.category_name}
 
-Recuerda devolver estrictamente un objeto JSON que siga la estructura exacta definida en la sección 4 de las instrucciones.
+Recuerda: 
+1. Devolver estrictamente un objeto JSON que siga la estructura exacta definida en la sección 4 de las instrucciones.
+2. El artículo debe ser extremadamente largo, detallado y exhaustivo. Debe contener estrictamente entre 2.200 y 3.000 palabras de texto real (sin contar etiquetas HTML).
+3. BAJO NINGÚN CONCEPTO puede bajar de 1.200 palabras de texto real. Explica cada cobertura, exclusión, base legal e implicaciones periciales con total detalle para garantizar la máxima profundidad y longitud.
 `;
 
-    let contentResponseText = "";
+    let finalResult = null;
     let attempt = 0;
     const maxAttempts = 3;
+    let extraInstruction = "";
 
-    while (attempt < maxAttempts && !contentResponseText) {
+    while (attempt < maxAttempts) {
       try {
         attempt++;
         console.log(`  Intento ${attempt}: Conectando con DeepSeek...`);
@@ -343,9 +378,9 @@ Recuerda devolver estrictamente un objeto JSON que siga la estructura exacta def
             model: "deepseek-chat",
             messages: [
               { role: "system", content: "Eres un redactor experto en SEO y desarrollo web. Debes responder estrictamente en formato JSON." },
-              { role: "user", content: promptRedaccion }
+              { role: "user", content: promptRedaccion + extraInstruction }
             ],
-            temperature: 0.6,
+            temperature: 0.5,
             max_tokens: 8000,
             response_format: { type: "json_object" }
           })
@@ -357,7 +392,19 @@ Recuerda devolver estrictamente un objeto JSON que siga la estructura exacta def
         }
 
         const data = await res.json();
-        contentResponseText = data.choices[0].message.content;
+        const rawContent = data.choices[0].message.content;
+        const parsedResult = extractContentHTML(rawContent, prop.title, prop.excerpt, prop.keyword);
+        
+        const wordCount = getWordCount(parsedResult.content);
+        console.log(`  -> Intento ${attempt}: El artículo tiene ${wordCount} palabras de texto real.`);
+
+        if (wordCount >= 1200) {
+          finalResult = parsedResult;
+          break;
+        } else {
+          console.warn(`  -> ADVERTENCIA: El artículo generado tiene menos de 1200 palabras (${wordCount}). Reintentando con instrucciones de expansión estrictas...`);
+          extraInstruction = `\n\n[ATENCIÓN CRÍTICA: Tu redacción anterior contenía únicamente ${wordCount} palabras. Es obligatorio que el artículo tenga más de 1.500 palabras y nunca baje de 1.200 palabras. Por favor, reescribe el artículo con muchísima más profundidad: añade más casos prácticos de la vida real en España, explica las normativas legales en detalle (Ley 50/1980), detalla de forma exhaustiva las exclusiones de la póliza y expande todas las secciones y tablas para superar con creces el límite mínimo.]`;
+        }
       } catch (err) {
         console.error(`  Error en intento ${attempt}:`, err.message);
         if (attempt < maxAttempts) {
@@ -367,13 +414,10 @@ Recuerda devolver estrictamente un objeto JSON que siga la estructura exacta def
       }
     }
 
-    if (!contentResponseText) {
-      console.error(`[ERROR] No se pudo redactar el artículo: ${prop.title}`);
+    if (!finalResult) {
+      console.error(`[ERROR] No se pudo generar un artículo que cumpla con el mínimo de palabras para: ${prop.title}`);
       continue;
     }
-
-    // Process result
-    const result = extractContentHTML(contentResponseText, prop.title, prop.excerpt, prop.keyword);
 
     // Calculate random time
     const timeLimit = randomTimes[i];
@@ -400,8 +444,8 @@ Recuerda devolver estrictamente un objeto JSON que siga la estructura exacta def
     
     // Prepare HTML content value for DB format (JSON string containing title and content)
     const dbContentJSON = {
-      title: result.title || prop.title,
-      content: result.content
+      title: finalResult.title || prop.title,
+      content: finalResult.content
     };
     const dbContentValue = JSON.stringify(dbContentJSON);
 
@@ -421,8 +465,8 @@ Recuerda devolver estrictamente un objeto JSON que siga la estructura exacta def
         date = EXCLUDED.date`,
       [
         prop.slug,
-        result.title || prop.title,
-        result.excerpt || prop.excerpt,
+        finalResult.title || prop.title,
+        finalResult.excerpt || prop.excerpt,
         prop.category_name,
         prop.category_slug,
         dateStr,
@@ -431,8 +475,8 @@ Recuerda devolver estrictamente un objeto JSON que siga la estructura exacta def
         randomGradient,
         prop.author,
         dbContentValue,
-        result.meta_title || prop.title,
-        result.meta_description || prop.excerpt,
+        finalResult.meta_title || prop.title,
+        finalResult.meta_description || prop.excerpt,
         pubDate,
         prop.keyword
       ]

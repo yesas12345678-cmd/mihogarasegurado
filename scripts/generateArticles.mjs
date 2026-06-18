@@ -34,6 +34,13 @@ const pool = new Pool({
   ssl: false,
 });
 
+// Clean HTML tag stripper to count words in the article text
+function getWordCount(html) {
+  if (!html) return 0;
+  const plainText = html.replace(/<[^>]*>/g, " ");
+  return plainText.trim().split(/\s+/).filter(Boolean).length;
+}
+
 // Robust function to parse IA responses (JSON / Plain HTML / Truncated HTML)
 function extractContentHTML(rawText, originalTitle, originalExcerpt, originalKeyword) {
   try {
@@ -174,14 +181,18 @@ async function main() {
       *   Palabras Clave Principales (Keywords): ${article.keyword}
       *   Categoría: ${article.category_name}
       
-      Recuerda devolver estrictamente un objeto JSON que siga la estructura exacta definida en la sección 4 de las instrucciones.
+      Recuerda:
+      1. Devolver estrictamente un objeto JSON que siga la estructura exacta definida en la sección 4 de las instrucciones.
+      2. El artículo debe ser extremadamente largo, detallado y exhaustivo. Debe contener estrictamente entre 2.200 y 3.000 palabras de texto real (sin contar etiquetas HTML).
+      3. BAJO NINGÚN CONCEPTO puede bajar de 1.200 palabras de texto real. Explica cada cobertura, exclusión, base legal e implicaciones periciales con total detalle para garantizar la máxima profundidad y longitud.
       `;
 
-      let generatedResponse = "";
+      let finalResult = null;
       let attempt = 0;
       const maxAttempts = 3;
+      let extraInstruction = "";
 
-      while (attempt < maxAttempts && !generatedResponse) {
+      while (attempt < maxAttempts) {
         try {
           attempt++;
           console.log(`>> Llamando a la API de DeepSeek (Intento ${attempt})...`);
@@ -196,9 +207,9 @@ async function main() {
               model: "deepseek-chat",
               messages: [
                 { role: "system", content: "Eres un redactor experto en SEO y desarrollo web. Debes responder estrictamente en formato JSON." },
-                { role: "user", content: prompt }
+                { role: "user", content: prompt + extraInstruction }
               ],
-              temperature: 0.6,
+              temperature: 0.5,
               max_tokens: 8000,
               response_format: { type: "json_object" }
             })
@@ -210,8 +221,19 @@ async function main() {
           }
 
           const data = await response.json();
-          generatedResponse = data.choices[0].message.content;
-          console.log(`>> Respuesta recibida con éxito. Longitud: ${generatedResponse.length} caracteres.`);
+          const rawContent = data.choices[0].message.content;
+          const parsedResult = extractContentHTML(rawContent, article.title, article.excerpt, article.keyword);
+          
+          const wordCount = getWordCount(parsedResult.content);
+          console.log(`>> Intento ${attempt}: El artículo tiene ${wordCount} palabras de texto real.`);
+
+          if (wordCount >= 1200) {
+            finalResult = parsedResult;
+            break;
+          } else {
+            console.warn(`>> ADVERTENCIA: El artículo generado tiene menos de 1200 palabras (${wordCount}). Reintentando con instrucciones de expansión estrictas...`);
+            extraInstruction = `\n\n[ATENCIÓN CRÍTICA: Tu redacción anterior contenía únicamente ${wordCount} palabras. Es obligatorio que el artículo tenga más de 1.500 palabras y nunca baje de 1.200 palabras. Por favor, reescribe el artículo con muchísima más profundidad: añade más casos prácticos de la vida real en España, explica las normativas legales en detalle (Ley 50/1980), detalla de forma exhaustiva las exclusiones de la póliza y expande todas las secciones y tablas para superar con creces el límite mínimo.]`;
+          }
         } catch (apiErr) {
           console.error(`>> Error de API en el intento ${attempt}:`, apiErr.message);
           if (attempt < maxAttempts) {
@@ -221,24 +243,19 @@ async function main() {
         }
       }
 
-      if (generatedResponse) {
-        const result = extractContentHTML(generatedResponse, article.title, article.excerpt, article.keyword);
-
+      if (finalResult) {
         console.log(`>> Guardando contenido y metadatos del artículo en la base de datos...`);
         
-        // Asignar imagen si es necesario
-        // En este script de generación de artículos iniciales vacíos, la imagen_url ya fue configurada
-        // por la inicialización o patch en db.ts, así que mantenemos la que está o la actualizamos si se requiere.
         await pool.query(
           `UPDATE articles 
            SET title = $1, meta_title = $2, meta_description = $3, excerpt = $4, content = $5 
            WHERE id = $6`,
           [
-            result.title || article.title, 
-            result.meta_title || article.title, 
-            result.meta_description || article.excerpt, 
-            result.excerpt || article.excerpt, 
-            result.content, 
+            finalResult.title || article.title, 
+            finalResult.meta_title || article.title, 
+            finalResult.meta_description || article.excerpt, 
+            finalResult.excerpt || article.excerpt, 
+            finalResult.content, 
             article.id
           ]
         );
@@ -247,7 +264,7 @@ async function main() {
         // Esperar para evitar saturar la API
         await new Promise(res => setTimeout(res, 4000));
       } else {
-        console.error(`[FALLO] No se pudo generar contenido para el artículo: ${article.id}`);
+        console.error(`[FALLO] No se pudo generar contenido válido de más de 1200 palabras para: ${article.id}`);
       }
     }
 
