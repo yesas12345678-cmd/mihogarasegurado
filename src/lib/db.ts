@@ -36,6 +36,18 @@ export async function initDB() {
       );
     `);
 
+    // Create cron_logs table if it doesn't exist
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS cron_logs (
+        id SERIAL PRIMARY KEY,
+        script_name VARCHAR(255) NOT NULL,
+        started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        status VARCHAR(50) NOT NULL,
+        error_message TEXT,
+        details TEXT
+      );
+    `);
+
     // 2. Safely alter table schema to add meta fields if missing
     await client.query(`
       ALTER TABLE articles ADD COLUMN IF NOT EXISTS meta_title VARCHAR(255);

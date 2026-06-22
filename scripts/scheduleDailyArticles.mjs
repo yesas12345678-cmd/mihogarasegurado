@@ -28,9 +28,27 @@ for (const file of envFiles) {
 const connectionString = process.env.DATABASE_URL || "postgresql://postgres:ue141n9fuwc6czgz@187.127.233.89:5433/postgres";
 const apiKey = process.env.DEEPSEEK_API_KEY;
 
+const pool = new Pool({
+  connectionString,
+  ssl: false,
+});
+
+async function logCronExecution(status, errorMessage = null, details = null) {
+  try {
+    await pool.query(
+      `INSERT INTO cron_logs (script_name, status, error_message, details)
+       VALUES ($1, $2, $3, $4)`,
+      ["scheduleDailyArticles.mjs", status, errorMessage, details]
+    );
+  } catch (e) {
+    console.error("Failed to write cron log to DB:", e.message);
+  }
+}
+
 if (!apiKey) {
+  const errMsg = "ERROR: No se ha encontrado la variable DEEPSEEK_API_KEY.";
   console.error("\n=====================================================================");
-  console.error("ERROR: No se ha encontrado la variable DEEPSEEK_API_KEY.");
+  console.error(errMsg);
   console.error("Para solucionarlo en producción (Dokploy/VPS):");
   console.error("1. Ve al panel de Dokploy de esta aplicación.");
   console.error("2. Haz clic en la pestaña 'Environment'.");
@@ -39,13 +57,10 @@ if (!apiKey) {
   console.error("   - Value: [Tu clave de API de DeepSeek]");
   console.error("4. Guarda los cambios (Save) y haz clic en 'Deploy' para redesplegar.");
   console.error("=====================================================================\n");
+  await logCronExecution("ERROR", errMsg, "Missing DEEPSEEK_API_KEY environment variable.");
+  await pool.end();
   process.exit(1);
 }
-
-const pool = new Pool({
-  connectionString,
-  ssl: false,
-});
 
 // Premium images by category for Home Insurance
 const CATEGORY_IMAGES = {
@@ -179,6 +194,7 @@ function extractContentHTML(rawText, originalTitle, originalExcerpt, originalKey
 
 async function main() {
   console.log("=== PLANIFICADOR DIARIO: GENERADOR DE 2 ARTÍCULOS NUEVOS ===");
+  const generatedArticles = [];
 
   // 1. Obtener títulos y keywords existentes de la BD para evitar duplicados
   console.log(">> Obteniendo registros existentes de la base de datos...");
@@ -494,15 +510,28 @@ Por favor, no resumas ni uses viñetas cortas. Desarrolla cada párrafo extensam
 
     console.log(`[OK] Guardado completado con éxito para slug: ${prop.slug}`);
     
+    generatedArticles.push({
+      title: finalResult.title || prop.title,
+      slug: prop.slug,
+      category: prop.category_name,
+      keyword: prop.keyword
+    });
+
     // Waiting interval
     await new Promise(res => setTimeout(res, 4000));
   }
 
   console.log("\n=== PLANIFICADOR DIARIO COMPLETADO CON ÉXITO ===");
+  await logCronExecution("SUCCESS", null, `Se generaron y publicaron ${generatedArticles.length} artículos: ${JSON.stringify(generatedArticles)}`);
   await pool.end();
 }
 
 main().catch(async (err) => {
   console.error("Excepción general en el proceso:", err);
+  try {
+    await logCronExecution("ERROR", err.message, err.stack);
+  } catch (e) {
+    console.error("Error logging exception:", e);
+  }
   await pool.end();
 });
