@@ -93,7 +93,7 @@ const CATEGORY_IMAGES = {
 // Date formatter in Spanish (e.g. "17 Jun 2026")
 function formatSpanishDate(d) {
   const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  return `${d.getUTCDate()} ${months[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
 // Clean HTML tag stripper to count words in the article text
@@ -447,14 +447,17 @@ Por favor, no resumas ni uses viñetas cortas. Desarrolla cada párrafo extensam
 
     // Calculate random time
     const timeLimit = randomTimes[i];
-    const pubDate = new Date();
+    const formatterStr = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Madrid" }); // "YYYY-MM-DD"
+    const [yr, mo, dy] = formatterStr.split("-").map(Number);
+
+    const pubDate = new Date(Date.UTC(yr, mo - 1, dy));
     const randomHour = timeLimit.startHour + Math.floor(Math.random() * (timeLimit.endHour - timeLimit.startHour));
     const randomMinute = Math.floor(Math.random() * 60);
     
-    pubDate.setHours(randomHour);
-    pubDate.setMinutes(randomMinute);
-    pubDate.setSeconds(0);
-    pubDate.setMilliseconds(0);
+    pubDate.setUTCHours(randomHour);
+    pubDate.setUTCMinutes(randomMinute);
+    pubDate.setUTCSeconds(0);
+    pubDate.setUTCMilliseconds(0);
 
     const dateStr = formatSpanishDate(pubDate);
 

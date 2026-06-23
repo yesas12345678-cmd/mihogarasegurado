@@ -19,19 +19,33 @@ export async function register() {
       const checkAndRunCron = async () => {
         try {
           const now = new Date();
-          const madridTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Madrid" }));
-          const currentHour = madridTime.getHours();
+          const madridDateStr = new Intl.DateTimeFormat("sv-SE", {
+            timeZone: "Europe/Madrid",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit"
+          }).format(now); // "YYYY-MM-DD"
           
-          console.log(`[Self-Scheduler] Check triggered at ${madridTime.toLocaleString()} (Spain local). Hour: ${currentHour}`);
+          const currentHour = parseInt(
+            new Intl.DateTimeFormat("en-US", {
+              timeZone: "Europe/Madrid",
+              hour: "numeric",
+              hour12: false
+            }).format(now),
+            10
+          );
           
-          // Only run if it's 2 AM or later (Spain peninsular time)
-          if (currentHour >= 2) {
-            // Check if there is a successful run in the last 21 hours
+          console.log(`[Self-Scheduler] Check triggered. Madrid date: ${madridDateStr}, hour: ${currentHour}`);
+          
+          // Only run if it's 7 AM or later (Spain peninsular time)
+          if (currentHour >= 7) {
+            // Check if there is a successful run on the current calendar day (Europe/Madrid)
             const result = await pool.query(
               `SELECT id FROM cron_logs 
                WHERE script_name = 'scheduleDailyArticles.mjs' 
                  AND status = 'SUCCESS'
-                 AND started_at >= NOW() - INTERVAL '21 hours'`
+                 AND (started_at AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/Madrid')::date = $1::date`,
+              [madridDateStr]
             );
             
             if (result.rows.length === 0) {
@@ -44,7 +58,7 @@ export async function register() {
               );
               
               if (runningCheck.rows.length === 0) {
-                console.log("[Self-Scheduler] No successful run in the last 21 hours. Starting daily article generation...");
+                console.log(`[Self-Scheduler] No successful run on ${madridDateStr}. Starting daily article generation...`);
                 
                 // Register RUNNING state immediately to lock other triggers
                 await pool.query(
@@ -69,10 +83,10 @@ export async function register() {
                 console.log("[Self-Scheduler] A cron run is already in RUNNING state.");
               }
             } else {
-              console.log("[Self-Scheduler] Cron has already run successfully in the last 21 hours.");
+              console.log(`[Self-Scheduler] Cron has already run successfully today (${madridDateStr}).`);
             }
           } else {
-            console.log("[Self-Scheduler] Skipping check, hour is before 2 AM Spain local.");
+            console.log(`[Self-Scheduler] Skipping check, hour is before 7 AM Spain local (current: ${currentHour}).`);
           }
         } catch (errLoop: any) {
           console.error("[Self-Scheduler] Error in check loop:", errLoop.message);
