@@ -78,6 +78,10 @@ export default function CookieBanner() {
     }
     // Write a technical cookie to verify acceptance is enabled
     document.cookie = "cookie_consent_accepted=true; max-age=31536000; path=/";
+    
+    // Dispatch custom event to notify script loaders
+    window.dispatchEvent(new Event("cookie-consent-accepted"));
+    
     setShowBanner(false);
   };
 

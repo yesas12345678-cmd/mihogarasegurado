@@ -3,7 +3,11 @@ import fs from "fs";
 import path from "path";
 import { SEED_ARTICLES } from "./seedData";
 
-const connectionString = process.env.DATABASE_URL || "postgresql://postgres:ue141n9fuwc6czgz@187.127.233.89:5433/postgres";
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("DATABASE_URL is not defined in the environment variables!");
+}
 
 export const pool = new Pool({
   connectionString,
@@ -54,6 +58,8 @@ export async function initDB() {
       ALTER TABLE articles ADD COLUMN IF NOT EXISTS meta_description TEXT;
       ALTER TABLE articles ADD COLUMN IF NOT EXISTS published_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
       ALTER TABLE articles ADD COLUMN IF NOT EXISTS keyword VARCHAR(255);
+      ALTER TABLE articles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+      ALTER TABLE articles ADD COLUMN IF NOT EXISTS sources TEXT;
     `);
 
     // 3. Add UNIQUE constraint for keyword if not exists
@@ -219,6 +225,21 @@ export async function initDB() {
       }
       console.log("Database patching completed successfully with unique images!");
     }
+
+    // Sync author names from SEED_ARTICLES if they were updated in code
+    for (const article of SEED_ARTICLES) {
+      await client.query(
+        "UPDATE articles SET author = $1 WHERE id = $2 AND author != $1",
+        [article.author, article.id]
+      );
+    }
+
+    // Globally normalize any abbreviated author names in database
+    await client.query(`
+      UPDATE articles SET author = 'Patricia Guerrero' WHERE author ILIKE 'Patricia%' AND author != 'Patricia Guerrero';
+      UPDATE articles SET author = 'Carlos Merino' WHERE author ILIKE 'Carlos%' AND author != 'Carlos Merino';
+      UPDATE articles SET author = 'Elena Ramos' WHERE author ILIKE 'Elena%' AND author != 'Elena Ramos';
+    `);
   } catch (err) {
     console.error("Error initializing database:", err);
     throw err;

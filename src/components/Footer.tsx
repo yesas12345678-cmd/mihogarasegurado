@@ -6,11 +6,15 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   const legalLinks = [
+    { name: "Quiénes Somos", href: "/quienes-somos" },
+    { name: "Política Editorial", href: "/politica-editorial" },
+    { name: "Equipo Editorial (E-E-A-T)", href: "/autores" },
+    { name: "Metodología de Comparativas", href: "/como-comparamos" },
+    { name: "Calculadora de Infraseguro", href: "/herramientas/calculadora-infraseguro" },
+    { name: "Contacto", href: "/contacto", isContact: true },
     { name: "Políticas de Privacidad", href: "/privacidad" },
     { name: "Políticas de Cookies", href: "/cookies" },
     { name: "Aviso Legal", href: "/aviso-legal" },
-    { name: "Página de Autores", href: "/autores" },
-    { name: "Contacto", href: "/contacto", isContact: true },
     { name: "Términos y Condiciones", href: "/terminos" },
   ];
 

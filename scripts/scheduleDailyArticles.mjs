@@ -25,8 +25,16 @@ for (const file of envFiles) {
   }
 }
 
-const connectionString = process.env.DATABASE_URL || "postgresql://postgres:ue141n9fuwc6czgz@187.127.233.89:5433/postgres";
+const connectionString = process.env.DATABASE_URL;
 const apiKey = process.env.DEEPSEEK_API_KEY;
+
+if (!connectionString) {
+  const errMsg = "ERROR: No se ha encontrado la variable DATABASE_URL.";
+  console.error("\n=====================================================================");
+  console.error(errMsg);
+  console.error("=====================================================================\n");
+  process.exit(1);
+}
 
 const pool = new Pool({
   connectionString,
@@ -105,6 +113,11 @@ function getWordCount(html) {
 
 // Cleaner/Extractor for JSON and HTML
 function extractContentHTML(rawText, originalTitle, originalExcerpt, originalKeyword) {
+  const defaultSources = [
+    { name: "Ley 50/1980, de 8 de octubre, de Contrato de Seguro (BOE)", url: "https://www.boe.es/buscar/act.php?id=BOE-A-1980-22501" },
+    { name: "Dirección General de Seguros y Fondos de Pensiones (DGSFP)", url: "https://www.dgsfp.mineco.es/" }
+  ];
+
   try {
     let cleanJSON = rawText.trim();
     if (cleanJSON.startsWith("```")) {
@@ -121,7 +134,8 @@ function extractContentHTML(rawText, originalTitle, originalExcerpt, originalKey
         meta_title: parsed.meta_title || parsed.metaTitle || originalTitle,
         meta_description: parsed.meta_description || parsed.metaDescription || originalExcerpt,
         excerpt: parsed.excerpt || originalExcerpt,
-        content: parsed.content
+        content: parsed.content,
+        sources: parsed.sources || defaultSources
       };
     }
   } catch (e) {
@@ -172,7 +186,8 @@ function extractContentHTML(rawText, originalTitle, originalExcerpt, originalKey
       meta_title: meta_title || title,
       meta_description: meta_description || originalKeyword,
       excerpt: excerpt || originalExcerpt,
-      content: unescapedHTML
+      content: unescapedHTML,
+      sources: defaultSources
     };
   }
 
@@ -188,8 +203,76 @@ function extractContentHTML(rawText, originalTitle, originalExcerpt, originalKey
     meta_title: originalTitle,
     meta_description: originalExcerpt,
     excerpt: originalExcerpt,
-    content: fallbackHTML
+    content: fallbackHTML,
+    sources: defaultSources
   };
+}
+
+function getArchetypePrompt(categoryName, title, keyword) {
+  const cleanCategory = categoryName.toLowerCase().trim();
+  
+  if (cleanCategory.includes("comparativa")) {
+    return `
+    ESTRUCTURA REQUERIDA (ARQUETIPO B - COMPARATIVAS DE PÓLIZAS DE SEGURO):
+    Debes redactar un artículo extenso (mínimo 2.200 palabras) utilizando las siguientes secciones estructuradas en HTML dentro de la propiedad 'content':
+    
+    1. INTRODUCCIÓN Y CONTEXTO EDITORIAL INDEPENDIENTE (mínimo 250 palabras): Explica la relevancia de esta comparativa de seguros de hogar en España. Presenta un resumen del análisis de mercado y la necesidad de transparencia.
+    2. TABLA COMPARATIVA DE LÍMITES Y GARANTÍAS (mínimo 300 palabras explicativas + tabla HTML): Diseña una tabla detallada con al menos 4 aseguradoras (ej. Mapfre, Allianz, Mutua Madrileña, AXA) comparando límites de Responsabilidad Civil, Daños Estéticos, Asistencia de urgencia y Franquicias. Utiliza insignias semánticas (bg-emerald-50 para 'Sí cubierto', bg-amber-50 para 'Opcional / Límite', bg-rose-50 para 'Excluido').
+    3. DUELO CARA A CARA: PROS Y CONTRAS DE CADA ASEGURADORA (mínimo 550 palabras): Utiliza una grilla de tarjetas (grid-cols-1 md:grid-cols-2) para desglosar detalladamente los pros y contras de cada compañía en España.
+    4. ANÁLISIS DE COBERTURAS CRÍTICAS Y LETRA PEQUEÑA (mínimo 450 palabras): Analiza en profundidad la diferencia en el trato pericial de estas compañías ante goteras, daños eléctricos o atascos de tuberías. Usa la Caja de Advertencia (fondo ámbar) para alertar sobre límites ocultos.
+    5. ESTADÍSTICAS DEL SECTOR Y RATIOS DE ATENCIÓN (mínimo 350 palabras): Cita estadísticas reales en España basadas en la Memoria Social del Seguro de UNESPA o ICEA (por ejemplo, el coste medio de los siniestros por agua de 420€ o que representan el 38% de las incidencias).
+    6. EL VEREDICTO DEL PERITO SEGÚN TU PERFIL DE VIVIENDA (mínimo 250 palabras): Usa la Caja de Consejo (fondo teal) para recomendar qué aseguradora conviene si es un piso alquilado, un chalet con piscina o una vivienda unifamiliar.
+    7. PREGUNTAS FRECUENTES SOBRE ESTA COMPARATIVA (mínimo 4 acordeones desplegables con <details> y respuestas muy desarrolladas de al menos 95 palabras cada una).
+    `;
+  } else if (cleanCategory.includes("cobertura")) {
+    return `
+    ESTRUCTURA REQUERIDA (ARQUETIPO C - COBERTURAS TÉCNICAS Y RECLAMACIÓN):
+    Debes redactar un artículo extenso (mínimo 2.200 palabras) utilizando las siguientes secciones estructuradas en HTML dentro de la propiedad 'content':
+    
+    1. INTRODUCCIÓN AL SINIESTRO Y COBERTURA (mínimo 250 palabras): Explica detalladamente en qué consiste este riesgo en el hogar y cómo lo percibe el asegurado medio en España.
+    2. MARCO LEGAL Y REGLAMENTO DE SEGUROS (mínimo 350 palabras): Cita explícitamente artículos de la Ley 50/1980 de Contrato de Seguro en España (por ejemplo, el Artículo 38 sobre nombramiento de peritos, o el Artículo 18 sobre el pago de la indemnización mínima) y detalla su aplicación práctica en este siniestro.
+    3. QUÉ EXAMINA EL PERITO: CRITERIOS TÉCNICOS DE ACEPTACIÓN (mínimo 500 palabras): Detalla minuciosamente los puntos clave que un perito de seguros inspecciona al acudir al hogar (ej. si la gotera viene de una junta de silicona deteriorada, si el daño eléctrico fue por rayo o sobretensión de la distribuidora, etc.).
+    4. EXCLUSIONES COMUNES Y GLOSARIO DE LETRA PEQUEÑA (mínimo 400 palabras): Explica de forma sumamente detallada qué incidentes NO están cubiertos. Utiliza la Caja de Advertencia (fondo ámbar) para alertar al lector sobre la exclusión por falta de mantenimiento o desgaste.
+    5. CASO DE ESTUDIO DE SINIESTRO REAL EN ESPAÑA (mínimo 450 palabras): Describe un expediente de reclamación realista y detallado. Incluye:
+       - Código de Expediente ficticio (ej. Siniestro Nº SH-2026/4921)
+       - Fecha de ocurrencia e aseguradora implicada
+       - Detalles técnicos de la avería observada por el perito
+       - Importe presupuestado, aplicación de depreciación o regla proporcional, e indemnización final cobrada.
+    6. PREGUNTAS FRECUENTES SOBRE ESTA COBERTURA (mínimo 4 acordeones desplegables con <details> y respuestas explicativas de al menos 95 palabras cada una).
+    7. RECOMENDACIÓN FINAL Y CONSEJOS DEL PERITO (mínimo 200 palabras): Recomendaciones para evitar rechazos de cobertura en el futuro. Usa la Caja de Consejo (fondo teal).
+    `;
+  } else if (cleanCategory.includes("vivienda") || cleanCategory.includes("tipo")) {
+    return `
+    ESTRUCTURA REQUERIDA (ARQUETIPO D - TIPOS DE VIVIENDA Y RIESGOS ESPECÍFICOS):
+    Debes redactar un artículo extenso (mínimo 2.200 palabras) utilizando las siguientes secciones estructuradas en HTML dentro de la propiedad 'content':
+    
+    1. INTRODUCCIÓN Y MAPA DE RIESGO DE LA VIVIENDA (mínimo 250 palabras): Explica las particularidades de este tipo de inmueble en España (pisos en altura, chalets, áticos, alquileres) y sus vulnerabilidades estadísticas de siniestralidad.
+    2. COBERTURAS INDISPENSABLES Y RECOMENDADAS (mínimo 450 palabras): Explica qué pólizas y coberturas adicionales se deben contratar obligatoriamente o de forma muy sugerida para este tipo de casa (ej. Responsabilidad Civil Locativa para inquilinos, robo exterior para chalets aislados).
+    3. TABLA COMPARATIVA DE CAPITALES SUGERIDOS (mínimo 300 palabras explicativas + tabla HTML): Elabora una tabla con recomendaciones de tasación de continente y contenido según metros cuadrados y calidades de construcción para este tipo de inmueble.
+    4. RESPONSABILIDADES Y CONFLICTOS FRECUENTES (mínimo 400 palabras): Trata los conflictos entre seguro comunitario y seguro privado, o casero frente a inquilino. Usa la Caja de Advertencia (fondo ámbar) para alertar sobre la concurrencia de seguros.
+    5. CASO DE ESTUDIO REAL DE PERITACIÓN (mínimo 450 palabras): Describe un caso práctico detallado de este tipo de vivienda. Incluye:
+       - Código de Expediente de Siniestro (ej. Expediente Nº PV-2026/3819)
+       - Origen del daño técnico
+       - Dictamen pericial y desglose económico de la indemnización.
+    6. PREGUNTAS FRECUENTES (FAQ) SOBRE ESTA TIPOLOGÍA (mínimo 4 acordeones desplegables con <details> y respuestas extensas de al menos 95 palabras cada una).
+    7. CONCLUSIONES Y RECOMENDACIÓN DE CONTRATACIÓN (mínimo 200 palabras): Usa la Caja de Consejo (fondo teal) para dar la firma final sobre cómo blindar este inmueble.
+    `;
+  } else {
+    // Guías
+    return `
+    ESTRUCTURA REQUERIDA (ARQUETIPO A - GUÍAS DE CONSUMO PASO A PASO):
+    Debes redactar un artículo extenso (mínimo 2.200 palabras) utilizando las siguientes secciones estructuradas en HTML dentro de la propiedad 'content':
+    
+    1. INTRODUCCIÓN Y ANTECEDENTES DE LA GESTIÓN (mínimo 250 palabras): Explica la importancia de este trámite y la dificultad burocrática habitual que afronta el asegurado en España.
+    2. LÍNEA DE TIEMPO CRONOLÓGICA DEL PROCESO (mínimo 450 palabras): Desarrolla una línea de tiempo visual o cronológica de los pasos a seguir. Representa esto visualmente usando una lista estilizada en HTML/Tailwind con bordes, números grandes y sombreados (CSS Timeline).
+    3. DOCUMENTACIÓN REQUERIDA Y REQUISITOS (mínimo 350 palabras): Detalla qué papeles, facturas, fotos, denuncias o informes técnicos debe reunir el asegurado. Utiliza una lista con iconos SVG de verificación.
+    4. MODELO DE CARTA / ESCRITO DE RECLAMACIÓN OFICIAL (mínimo 300 palabras): Proporciona una plantilla modelo de escrito formal listo para copiar y rellenar. Preséntalo en una caja con bordes grises y tipografía monoespacio (code/pre block).
+    5. A DÓNDE DIRIGIRSE: CONTACTOS Y PLAZOS LEGALES (mínimo 300 palabras): Explica los plazos legales (por ejemplo, 1 mes para que el Defensor responda, o 7 días para comunicar el siniestro). Utiliza la Caja de Advertencia (fondo ámbar).
+    6. CASO PRÁCTICO REAL RESUELTO (mínimo 300 palabras): Un ejemplo detallado de un consumidor que realizó este trámite con éxito (Expediente Reclamación Nº REC-2026/7821), con importes y dictamen final.
+    7. PREGUNTAS FRECUENTES (FAQ) DE LA GESTIÓN (mínimo 4 acordeones desplegables con <details> y respuestas extensas de al menos 95 palabras cada una).
+    8. CONSEJO FINAL DEL JURISTA (mínimo 200 palabras): Consejos prácticos de cierre. Usa la Caja de Consejo (fondo teal).
+    `;
+  }
 }
 
 async function main() {
@@ -360,8 +443,10 @@ Devuelve únicamente el objeto JSON.
     console.log(`\n--------------------------------------------------`);
     console.log(`>> Generando Artículo ${i + 1}/2: "${prop.title}"...`);
 
+    const archetypePrompt = getArchetypePrompt(prop.category_name, prop.title, prop.keyword);
+
     const promptRedaccion = `
-Plantilla de Instrucciones y Reglas de Formato:
+Plantilla de Instrucciones y Reglas de Formato General:
 ${templateContent}
 
 Parámetros de Entrada para este Artículo:
@@ -369,20 +454,14 @@ Parámetros de Entrada para este Artículo:
 *   Palabras Clave Principales (Keywords): ${prop.keyword}
 *   Categoría: ${prop.category_name}
 
-REQUISITOS OBLIGATORIOS DE ESTRUCTURA Y LONGITUD (CRÍTICO):
-Para garantizar que el artículo tenga estrictamente entre 2.200 y 3.000 palabras de texto real (sin contar etiquetas HTML) y nunca baje de 2.000 palabras bajo ninguna circunstancia, DEBES desarrollar con extrema amplitud y de forma muy extensa cada una de las siguientes secciones en el HTML del campo 'content':
+INSTRUCCIONES DE VALOR AÑADIDO Y COMPONENTES EXCLUSIVOS (CRÍTICO):
+1. INCLUIR EXPEDIENTES DE SINIESTRO REALES: Debes inyectar al menos un caso de estudio real que cite detalles específicos: un número de expediente ficticio (ej. Expediente Nº S-2026/8492), una aseguradora implicada (Mapfre, Allianz, etc.), el coste pericial calculated y cómo se resolvió.
+2. DATOS ESTADÍSTICOS DE ESPAÑA: Cita estadísticas de informes de UNESPA o ICEA sobre siniestralidad de hogar en España (ej. "según el informe UNESPA el 38% de los siniestros son goteras" o "el tiempo medio de atención pericial").
+3. VARIACIÓN DE ESTRUCTURA: Debes seguir estrictamente el arquetipo que se describe a continuación para diferenciar visualmente y a nivel de contenido este artículo del resto del portal.
 
-1. INTRODUCCIÓN DETALLADA (mínimo 250 palabras): Pon en contexto el tema, antecedentes y su relevancia actual en el mercado asegurador de España.
-2. BASE LEGAL Y MARCO REGULATORIO (mínimo 300 palabras): Cita explícitamente y explica detalladamente las leyes españolas pertinentes (como la Ley 50/1980 de Contrato de Seguro o la Ley de Arrendamientos Urbanos si aplica).
-3. COBERTURAS TÉCNICAS AL DETALLE (mínimo 450 palabras): Explica de forma minuciosa qué se incluye, qué límites económicos, franquicias o capitales suelen establecerse y cómo actúan los peritos.
-4. EXCLUSIONES COMUNES Y LETRA PEQUEÑA (mínimo 400 palabras): Detalla exhaustivamente qué siniestros y bajo qué condiciones NO están cubiertos bajo ninguna circunstancia. Utiliza el bloque de alerta (ámbar) para llamar la atención del lector con explicaciones muy extensas.
-5. CONSEJOS PRÁCTICOS PARA EL CONSUMIDOR (mínimo 350 palabras): Recomendaciones clave a la hora de contratar o declarar un siniestro, explicando paso a paso. Utiliza el bloque de recomendación (teal).
-6. CASOS PRÁCTICOS Y EJEMPLOS DE LA VIDA REAL (mínimo 450 palabras): Explica detalladamente al menos tres casos reales de siniestros complejos en España, su resolución pericial, justificación técnica y la indemnización correspondiente. Utiliza una grilla de tarjetas.
-7. TABLA COMPARATIVA SEMÁNTICA (mínimo 250 palabras de texto descriptivo + tabla): Desarrolla un análisis comparativo y dibuja una tabla con estados de color semántico (Verde: Sí cubierto, Amarillo: Límite/Opcional, Rojo: Excluido).
-8. SECCIÓN DE PREGUNTAS FRECUENTES (FAQ) INTERACTIVA (mínimo 4 acordeones desplegables con <details>, con respuestas muy detalladas y explicativas de al menos 95 palabras cada una).
-9. CONCLUSIÓN Y RECOMENDACIÓN FINAL DEL PERITO (mínimo 200 palabras): Un resumen formal sobre cómo actuar y asegurar la tranquilidad del hogar.
+${archetypePrompt}
 
-Por favor, no resumas ni uses viñetas cortas. Desarrolla cada párrafo extensamente para garantizar la máxima profundidad y alcanzar las 2.200 - 3.000 palabras totales. Si el contenido de 'content' tiene menos de 2.000 palabras de texto real, tu respuesta será rechazada.
+No resumas ni uses viñetas cortas. Desarrolla cada párrafo extensamente para garantizar la máxima profundidad y alcanzar las 2.200 - 3.000 palabras totales. Si el contenido de 'content' tiene menos de 2.000 palabras de texto real, tu respuesta será rechazada.
 `;
 
     let finalResult = null;
@@ -482,8 +561,9 @@ Por favor, no resumas ni uses viñetas cortas. Desarrolla cada párrafo extensam
       `INSERT INTO articles (
         id, title, excerpt, category_name, category_slug, 
         date, read_time, image_url, image_gradient, 
-        author, content, meta_title, meta_description, published_at, keyword
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        author, content, meta_title, meta_description, published_at, keyword,
+        sources, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW())
       ON CONFLICT (id) DO UPDATE SET
         title = EXCLUDED.title,
         excerpt = EXCLUDED.excerpt,
@@ -491,7 +571,9 @@ Por favor, no resumas ni uses viñetas cortas. Desarrolla cada párrafo extensam
         meta_title = EXCLUDED.meta_title,
         meta_description = EXCLUDED.meta_description,
         published_at = EXCLUDED.published_at,
-        date = EXCLUDED.date`,
+        date = EXCLUDED.date,
+        sources = EXCLUDED.sources,
+        updated_at = NOW()`,
       [
         prop.slug,
         finalResult.title || prop.title,
@@ -507,7 +589,8 @@ Por favor, no resumas ni uses viñetas cortas. Desarrolla cada párrafo extensam
         finalResult.meta_title || prop.title,
         finalResult.meta_description || prop.excerpt,
         pubDate,
-        prop.keyword
+        prop.keyword,
+        JSON.stringify(finalResult.sources || [])
       ]
     );
 

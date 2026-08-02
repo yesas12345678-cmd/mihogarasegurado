@@ -7,11 +7,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://mihogarasegurado.com";
 
   // Base landing pages and static content
-  const routes = ["", "/privacidad", "/cookies", "/aviso-legal", "/autores", "/terminos"].map((route) => ({
+  const routes = [
+    "",
+    "/privacidad",
+    "/cookies",
+    "/aviso-legal",
+    "/autores",
+    "/autores/patricia-guerrero",
+    "/autores/carlos-merino",
+    "/autores/elena-ramos",
+    "/terminos",
+    "/como-comparamos",
+    "/herramientas/calculadora-infraseguro",
+    "/politica-editorial",
+    "/quienes-somos"
+  ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
     changeFrequency: (route === "" ? "daily" : "monthly") as "daily" | "monthly",
-    priority: route === "" ? 1.0 : 0.4,
+    priority: route === "" ? 1.0 : (route.startsWith("/herramientas") ? 0.8 : (route.startsWith("/autores/") ? 0.7 : 0.4)),
   }));
 
   // Dynamic article URLs from our database

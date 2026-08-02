@@ -29,7 +29,7 @@ const ORIGINAL_ARTICLES: SeedArticleMetadata[] = [
     read_time: "Lectura de 15 min",
     image_url: "/uploads/comparativa_basico_todo_riesgo.png",
     image_gradient: "from-cyan-500 to-blue-600",
-    author: "Patricia G. (Ex-Perito)",
+    author: "Patricia Guerrero (Ex-Perito de Siniestros)",
     keyword: "seguro de hogar basico todo riesgo"
   },
   {
@@ -44,7 +44,7 @@ const ORIGINAL_ARTICLES: SeedArticleMetadata[] = [
     read_time: "Lectura de 15 min",
     image_url: "/uploads/comparativa_mejores_seguros.png",
     image_gradient: "from-blue-600 to-indigo-700",
-    author: "Patricia G. (Ex-Perito)",
+    author: "Patricia Guerrero (Ex-Perito de Siniestros)",
     keyword: "mejores seguros de hogar"
   },
   {
@@ -59,7 +59,7 @@ const ORIGINAL_ARTICLES: SeedArticleMetadata[] = [
     read_time: "Lectura de 14 min",
     image_url: "/uploads/cobertura_danos_agua.png",
     image_gradient: "from-teal-400 to-emerald-600",
-    author: "Carlos M. (Jurista)",
+    author: "Carlos Merino (Jurista de Consumo)",
     keyword: "daños por agua seguro hogar"
   },
   {
@@ -74,7 +74,7 @@ const ORIGINAL_ARTICLES: SeedArticleMetadata[] = [
     read_time: "Lectura de 14 min",
     image_url: "/uploads/cobertura_robo_hurto.png",
     image_gradient: "from-purple-600 to-indigo-800",
-    author: "Carlos M. (Jurista)",
+    author: "Carlos Merino (Jurista de Consumo)",
     keyword: "robo hurto atraco seguro hogar"
   },
   {
@@ -89,7 +89,7 @@ const ORIGINAL_ARTICLES: SeedArticleMetadata[] = [
     read_time: "Lectura de 15 min",
     image_url: "/uploads/vivienda_alquiler.png",
     image_gradient: "from-amber-400 to-orange-500",
-    author: "Elena R. (Abogada)",
+    author: "Elena Ramos (Abogada de Vivienda)",
     keyword: "seguro de hogar inquilino propietario"
   },
   {
@@ -104,7 +104,7 @@ const ORIGINAL_ARTICLES: SeedArticleMetadata[] = [
     read_time: "Lectura de 14 min",
     image_url: "/uploads/vivienda_chalet.png",
     image_gradient: "from-rose-500 to-red-650",
-    author: "Elena R. (Abogada)",
+    author: "Elena Ramos (Abogada de Vivienda)",
     keyword: "seguro hogar chalet unifamiliar"
   },
   {
@@ -119,7 +119,7 @@ const ORIGINAL_ARTICLES: SeedArticleMetadata[] = [
     read_time: "Lectura de 14 min",
     image_url: "/uploads/guia_reclamar_siniestro.png",
     image_gradient: "from-violet-500 to-purple-600",
-    author: "Carlos M. (Jurista)",
+    author: "Carlos Merino (Jurista de Consumo)",
     keyword: "como reclamar siniestro seguro hogar"
   },
   {
@@ -134,7 +134,7 @@ const ORIGINAL_ARTICLES: SeedArticleMetadata[] = [
     read_time: "Lectura de 13 min",
     image_url: "/uploads/guia_infraseguro_sobreseguro.png",
     image_gradient: "from-indigo-500 to-sky-600",
-    author: "Patricia G. (Ex-Perito)",
+    author: "Patricia Guerrero (Ex-Perito de Siniestros)",
     keyword: "infraseguro sobreseguro valor bienes"
   }
 ];
@@ -306,7 +306,11 @@ export function generateSeedArticles(): SeedArticleMetadata[] {
     else if (art.category_slug === "guias") guiaList.push(item);
   }
 
-  const authors = ["Patricia G. (Ex-Perito)", "Carlos M. (Jurista)", "Elena R. (Abogada)"];
+  const authors = [
+    "Patricia Guerrero (Ex-Perito de Siniestros)",
+    "Carlos Merino (Jurista de Consumo)",
+    "Elena Ramos (Abogada de Vivienda)"
+  ];
   const gradients = [
     "from-cyan-500 to-blue-600",
     "from-teal-400 to-emerald-600",

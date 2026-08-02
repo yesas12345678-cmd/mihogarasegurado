@@ -133,6 +133,24 @@ export default function Header({
                 </button>
               );
             })}
+            <Link
+              href="/herramientas/calculadora-infraseguro"
+              className="font-sans text-sm font-semibold text-teal-650 hover:text-teal-700 transition-colors duration-200 ml-2"
+            >
+              Calculadora
+            </Link>
+            <Link
+              href="/como-comparamos"
+              className="font-sans text-sm font-semibold text-slate-650 hover:text-slate-900 transition-colors duration-200"
+            >
+              Metodología
+            </Link>
+            <Link
+              href="/quienes-somos"
+              className="font-sans text-sm font-semibold text-slate-650 hover:text-slate-900 transition-colors duration-200"
+            >
+              Quiénes Somos
+            </Link>
           </nav>
 
           {/* Elegant Search Input */}
@@ -253,6 +271,29 @@ export default function Header({
                 </button>
               );
             })}
+            <div className="border-t border-slate-100 my-2 pt-2 space-y-1">
+              <Link
+                href="/herramientas/calculadora-infraseguro"
+                onClick={() => setIsOpen(false)}
+                className="block rounded-lg px-3 py-2 text-base font-semibold text-teal-650 hover:bg-slate-50 transition-colors"
+              >
+                Calculadora Infraseguro
+              </Link>
+              <Link
+                href="/como-comparamos"
+                onClick={() => setIsOpen(false)}
+                className="block rounded-lg px-3 py-2 text-base font-semibold text-slate-650 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+              >
+                Metodología de Comparativas
+              </Link>
+              <Link
+                href="/quienes-somos"
+                onClick={() => setIsOpen(false)}
+                className="block rounded-lg px-3 py-2 text-base font-semibold text-slate-650 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+              >
+                Quiénes Somos
+              </Link>
+            </div>
           </div>
         </div>
       )}

@@ -14,6 +14,8 @@ export interface Article {
   content: string; // Dynamic body content of the article
   metaTitle?: string;
   metaDescription?: string;
+  updatedAt?: string;
+  sources?: string;
 }
 
 export const ALL_ARTICLES: Article[] = [

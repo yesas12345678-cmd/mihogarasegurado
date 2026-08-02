@@ -5,6 +5,7 @@ import path from "path";
 import { pool } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { checkAuth } from "@/lib/session";
 
 function slugify(text: string): string {
   return text
@@ -20,6 +21,11 @@ function slugify(text: string): string {
 }
 
 export async function createArticle(prevState: any, formData: FormData) {
+  const isAuthed = await checkAuth();
+  if (!isAuthed) {
+    throw new Error("No autorizado: sesión de administrador inválida o expirada.");
+  }
+
   const title = formData.get("title") as string;
   const metaTitle = formData.get("metaTitle") as string;
   const metaDescription = formData.get("metaDescription") as string;
@@ -129,6 +135,11 @@ export async function createArticle(prevState: any, formData: FormData) {
 }
 
 export async function editArticle(prevState: any, formData: FormData) {
+  const isAuthed = await checkAuth();
+  if (!isAuthed) {
+    throw new Error("No autorizado: sesión de administrador inválida o expirada.");
+  }
+
   const currentId = formData.get("currentId") as string;
   const newSlug = formData.get("slug") as string;
   const title = formData.get("title") as string;
@@ -248,6 +259,11 @@ export async function editArticle(prevState: any, formData: FormData) {
 }
 
 export async function resetDemoArticles() {
+  const isAuthed = await checkAuth();
+  if (!isAuthed) {
+    throw new Error("No autorizado: sesión de administrador inválida o expirada.");
+  }
+
   const client = await pool.connect();
   try {
     await client.query("TRUNCATE TABLE articles");
