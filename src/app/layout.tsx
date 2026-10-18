@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import { Outfit, Inter } from "next/font/google";
 import CookieBanner from "@/components/CookieBanner";
-import AdSenseLoader from "@/components/AdSenseLoader";
 import "./globals.css";
 
 const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
   display: "swap",
- });
+});
 
 const inter = Inter({
   variable: "--font-inter",
@@ -29,6 +28,9 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  other: {
+    "google-adsense-account": "ca-pub-5406670795382768",
+  },
 };
 
 export default function RootLayout({
@@ -41,11 +43,16 @@ export default function RootLayout({
       lang="es"
       className={`${outfit.variable} ${inter.variable} h-full antialiased font-sans`}
     >
-      <head />
+      <head>
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5406670795382768"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
         {children}
         <CookieBanner />
-        <AdSenseLoader />
       </body>
     </html>
   );
